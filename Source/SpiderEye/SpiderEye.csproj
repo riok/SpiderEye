@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <Import Project="..\Shared\SpiderEye.Shared.proj" />
+
+    <PropertyGroup>
+        <TargetFramework>netcoreapp2.2</TargetFramework>
+        <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+        <IsWindows Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))' == 'true'">true</IsWindows>
+        <IsMacOs Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::OSX)))' == 'true'">true</IsMacOs>
+        <IsLinux Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))' == 'true'">true</IsLinux>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(IsWin)'=='true'">
+        <DefineConstants>Windows</DefineConstants>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(IsMacOs)'=='true'">
+        <DefineConstants>MacOs</DefineConstants>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(IsLinux)'=='true'">
+        <DefineConstants>Linux</DefineConstants>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Condition="'$(IsMacOs)' == 'true'" Include="..\SpiderEye.Mac\SpiderEye.Mac.csproj" />
+        <ProjectReference Condition="'$(IsLinux)' == 'true'" Include="..\SpiderEye.Linux\SpiderEye.Linux.csproj" />
+        <ProjectReference Condition="'$(IsLinux)' == 'true'" Include="..\SpiderEye.Windows\SpiderEye.Windows.csproj" />
+        <ProjectReference Include="..\SpiderEye.Core\SpiderEye.Core.csproj" />
+    </ItemGroup>
+</Project>
