@@ -1,6 +1,8 @@
-﻿function SpiderEyeBridge(exfn) {
+﻿function SpiderEyeBridge(exfn, convertPayloadToJson) {
+    var convertPayloadFn = convertPayloadToJson ? JSON.stringify : x => x;
+
     this.updateTitle = function (title) {
-        exfn(JSON.stringify({
+        exfn(convertPayloadFn({
             type: "title",
             parameters: title
         }));
@@ -19,7 +21,7 @@
 
         var callbackId = callbackIds++;
         callbacks[callbackId] = callback;
-        exfn(JSON.stringify({
+        exfn(convertPayloadFn({
             type: "api",
             id: id,
             parameters: parameters,
@@ -75,7 +77,7 @@
             return "{ \"success\": false, \"noSubscriber\": true }";
         }
 
-        return JSON.stringify({
+        return convertPayloadFn({
             result: result,
             hasResult: typeof result !== "undefined",
             error: error,
