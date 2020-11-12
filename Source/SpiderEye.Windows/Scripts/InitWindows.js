@@ -1,4 +1,4 @@
-﻿window._spidereye = new SpiderEyeBridge(function (e) { window.chrome.webview.postMessage(JSON.parse(e)); });
+﻿window._spidereye = new SpiderEyeBridge(function (e) { window.chrome.webview.postMessage(e); }, false);
 window._spidereye.updateTitle(document.title);
 
 observeTitle();
