@@ -4,7 +4,6 @@
   <PropertyGroup>
     <TargetFrameworks>net5.0-windows</TargetFrameworks>
     <UseWindowsForms>true</UseWindowsForms>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <AssemblyName>SpiderEye.Native</AssemblyName>
     <RootNamespace>SpiderEye.Windows</RootNamespace>
   </PropertyGroup>
