@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Reflection;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using SpiderEye.Bridge.Api;
 using SpiderEye.Bridge.Models;
 
@@ -17,8 +18,10 @@ namespace SpiderEye.Bridge
         }
 
         private static event EventHandler<object> GlobalEventHandlerUpdate;
+        private static event EventHandler<Type> GlobalTypeEventHandlerUpdate;
         private static readonly object GlobalHandlerLock = new object();
         private static readonly List<object> GlobalHandler = new List<object>();
+        private static readonly List<Type> GlobalTypeHandler = new List<Type>();
 
         private static readonly IJsonConverter JsonConverter = new JsonNetJsonConverter();
 
@@ -26,15 +29,19 @@ namespace SpiderEye.Bridge
         private readonly Dictionary<string, ApiMethod> apiMethods = new Dictionary<string, ApiMethod>();
 
         private readonly Window window;
+        private readonly IServiceProvider serviceProvider;
 
-        public WebviewBridge(Window window)
+        public WebviewBridge(Window window, IServiceProvider serviceProvider = null)
         {
             this.window = window ?? throw new ArgumentNullException(nameof(window));
+            this.serviceProvider = serviceProvider;
 
             InitApi();
         }
 
-        public static void AddGlobalHandlerStatic(object handler)
+        public bool IsDependencyInjectionEnabled => serviceProvider != null;
+
+        public static void AddGlobalHandler(object handler)
         {
             lock (GlobalHandlerLock)
             {
@@ -43,9 +50,24 @@ namespace SpiderEye.Bridge
             }
         }
 
+        public static void AddGlobalHandler<T>()
+        {
+            var type = typeof(T);
+            lock (GlobalHandlerLock)
+            {
+                GlobalTypeHandler.Add(type);
+                GlobalTypeEventHandlerUpdate?.Invoke(null, type);
+            }
+        }
+
         public void AddHandler(object handler)
         {
             AddApiObject(handler);
+        }
+
+        public void AddHandler<T>()
+        {
+            AddApiObject(typeof(T));
         }
 
         public void AddOrReplaceHandler(object handler)
@@ -53,9 +75,9 @@ namespace SpiderEye.Bridge
             AddApiObject(handler, true);
         }
 
-        public void AddGlobalHandler(object handler)
+        public void AddOrReplaceHandler<T>()
         {
-            AddGlobalHandlerStatic(handler);
+            AddApiObject(typeof(T), true);
         }
 
         Task IWebviewBridge.InvokeAsync(string id, object data) => InvokeAsync(id, data);
@@ -171,7 +193,10 @@ namespace SpiderEye.Bridge
                         parametersObject = JsonConverter.Deserialize(parameters, info.ParameterType);
                     }
 
-                    object result = await info.InvokeAsync(parametersObject);
+                    object result = info is InstanceApiMethod instanceApiMethod
+                        ? await instanceApiMethod.InvokeAsync(parametersObject)
+                        : await InvokeWithDependencyInjection((IDependencyInjectionApiMethod)info, parametersObject);
+
                     return new ApiResultModel
                     {
                         Success = true,
@@ -184,11 +209,30 @@ namespace SpiderEye.Bridge
             else { return ApiResultModel.FromError($"Unknown API call \"{id}\"."); }
         }
 
+        private async Task<object> InvokeWithDependencyInjection(IDependencyInjectionApiMethod apiMethod, object parameters)
+        {
+            var scope = serviceProvider.CreateScope();
+            await using var disposableWrapper = new AsyncDisposableWrapper(scope);
+            return await apiMethod.InvokeAsync(scope.ServiceProvider, parameters);
+        }
+
         private void AddApiObject(object handler, bool replaceIfExisting = false)
         {
             if (handler == null) { throw new ArgumentNullException(nameof(handler)); }
 
             Type type = handler.GetType();
+            AddApiMethods(type, replaceIfExisting, method => new InstanceApiMethod(handler, method));
+        }
+
+        private void AddApiObject(Type type, bool replaceIfExisting = false)
+        {
+            if (!IsDependencyInjectionEnabled) { throw new InvalidOperationException("Cannot add handlers via type if dependency injection isn't enabled"); }
+
+            AddApiMethods(type, replaceIfExisting, method => new DependencyInjectionApiMethod(type, method));
+        }
+
+        private void AddApiMethods(Type type, bool replaceIfExisting, Func<MethodInfo, ApiMethod> apiMethodFunc)
+        {
             string rootName = type.Name;
             var attribute = type.GetCustomAttribute<BridgeObjectAttribute>();
             if (attribute != null && !string.IsNullOrWhiteSpace(attribute.Path)) { rootName = attribute.Path; }
@@ -202,7 +246,7 @@ namespace SpiderEye.Bridge
             {
                 if (method.GetParameters().Length > 1) { continue; }
 
-                var info = new ApiMethod(handler, method);
+                var info = apiMethodFunc(method);
                 string fullName = $"{rootName}.{info.Name}";
 
                 if (!replaceIfExisting && apiMethods.ContainsKey(fullName))
@@ -222,10 +266,16 @@ namespace SpiderEye.Bridge
             lock (GlobalHandlerLock)
             {
                 GlobalEventHandlerUpdate += (s, e) => AddApiObject(e);
+                GlobalTypeEventHandlerUpdate += (s, e) => AddApiObject(e);
 
                 foreach (object handler in GlobalHandler)
                 {
                     AddApiObject(handler);
+                }
+
+                foreach (var type in GlobalTypeHandler)
+                {
+                    AddApiObject(type);
                 }
             }
         }

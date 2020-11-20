@@ -15,6 +15,7 @@ export class BridgeComponent {
     longRunningTaskState: string;
     longRunningState: string;
     getDataState: string;
+    getInstanceState: string;
     powerState: string;
     getErrorState: string;
 
@@ -43,6 +44,13 @@ export class BridgeComponent {
         this.spidereye.invokeApi<SomeDataModel>('UiBridge.getSomeData')
             .subscribe(data => this.getDataState = 'Result: ' + JSON.stringify(data),
                 error => this.getDataState = 'Error: ' + error.message);
+    }
+
+    getInstanceId() {
+        this.getInstanceState = 'Getting...';
+        this.spidereye.invokeApi<string>('UiBridge.getInstanceId')
+            .subscribe(data => this.getInstanceState = 'Result: ' + data,
+                error => this.getInstanceState = 'Error: ' + error.message);
     }
 
     power() {
