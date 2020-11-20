@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Threading.Tasks;
-using SpiderEye.Bridge.Models;
 
 namespace SpiderEye.Bridge
 {
@@ -10,10 +9,23 @@ namespace SpiderEye.Bridge
     public interface IWebviewBridge
     {
         /// <summary>
+        /// Gets a value indicating whether dependency injection is enabled for the bridge.
+        /// If this is true, bridge calls run in a scoped DI lifetime.
+        /// </summary>
+        public bool IsDependencyInjectionEnabled { get; }
+
+        /// <summary>
         /// Adds a custom handler to be called from the webview.
         /// </summary>
         /// <param name="handler">The handler instance.</param>
         void AddHandler(object handler);
+
+        /// <summary>
+        /// Adds a custom handler to be called from the webview.
+        /// Note: This method throws if <see cref="IsDependencyInjectionEnabled"/> is false.
+        /// </summary>
+        /// <typeparam name="T">The handler type.</typeparam>
+        void AddHandler<T>();
 
         /// <summary>
         /// Adds or replaces a custom handler to be called from the webview.
@@ -22,10 +34,10 @@ namespace SpiderEye.Bridge
         void AddOrReplaceHandler(object handler);
 
         /// <summary>
-        /// Adds a custom handler to be called from any webview of the application.
+        /// Adds or replaces a custom handler to be called from the webview.
         /// </summary>
-        /// <param name="handler">The handler instance.</param>
-        void AddGlobalHandler(object handler);
+        /// <typeparam name="T">The handler type.</typeparam>
+        void AddOrReplaceHandler<T>();
 
         /// <summary>
         /// Asynchronously invokes an event in the webview.

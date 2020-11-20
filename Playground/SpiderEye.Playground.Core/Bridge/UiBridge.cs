@@ -6,7 +6,13 @@ namespace SpiderEye.Playground.Core
 {
     public class UiBridge
     {
-        private readonly Random random = new Random();
+        private static readonly Random random = new Random();
+        private readonly string instanceId;
+
+        public UiBridge()
+        {
+            instanceId = Guid.NewGuid().ToString();
+        }
 
         public async Task RunLongProcedureOnTask()
         {
@@ -25,6 +31,11 @@ namespace SpiderEye.Playground.Core
                 Text = "Hello World",
                 Number = random.Next(100),
             };
+        }
+
+        public string GetInstanceId()
+        {
+            return instanceId;
         }
 
         public double Power(PowerModel model)

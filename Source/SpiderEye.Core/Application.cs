@@ -79,7 +79,16 @@ namespace SpiderEye
         /// <param name="handler">The handler instance.</param>
         public static void AddGlobalHandler(object handler)
         {
-            WebviewBridge.AddGlobalHandlerStatic(handler);
+            WebviewBridge.AddGlobalHandler(handler);
+        }
+
+        /// <summary>
+        /// Adds a custom handler to be called from any webview of the application.
+        /// </summary>
+        /// <typeparam name="T">The handler type.</typeparam>
+        public static void AddGlobalHandler<T>()
+        {
+            WebviewBridge.AddGlobalHandler<T>();
         }
 
         /// <summary>

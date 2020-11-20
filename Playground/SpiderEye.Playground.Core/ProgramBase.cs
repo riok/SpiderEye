@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Threading.Channels;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace SpiderEye.Playground.Core
 {
@@ -12,8 +13,13 @@ namespace SpiderEye.Playground.Core
         {
             var icon = AppIcon.FromFile("icon", ".");
 
+            var serviceCollection = new ServiceCollection();
+            serviceCollection.AddScoped<UiBridge>();
+            Application.AddGlobalHandler<UiBridge>();
+            using var serviceProvider = serviceCollection.BuildServiceProvider();
+
             using (var statusIcon = new StatusIcon())
-            using (var window = new Window())
+            using (var window = new Window(serviceProvider))
             {
                 _mainWindow = window;
                 window.Title = "SpiderEye Playground";
@@ -75,9 +81,6 @@ namespace SpiderEye.Playground.Core
                 exitItem.Click += (s, e) => Application.Exit();
 
                 statusIcon.Menu = menu;
-
-                var bridge = new UiBridge();
-                Application.AddGlobalHandler(bridge);
 
                 // the port number is defined in the angular.json file (under "architect"->"serve"->"options"->"port")
                 // note that you have to run the angular dev server first (npm run watch)

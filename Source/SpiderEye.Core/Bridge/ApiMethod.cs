@@ -6,7 +6,7 @@ using SpiderEye.Tools;
 
 namespace SpiderEye.Bridge
 {
-    internal class ApiMethod
+    internal abstract class ApiMethod
     {
         public string Name { get; }
         public Type ParameterType { get; }
@@ -15,13 +15,11 @@ namespace SpiderEye.Bridge
         public bool HasParameter { get; }
         public bool IsAsync { get; }
 
-        private readonly object instance;
         private readonly MethodInfo info;
         private readonly Func<object, object> getTaskResult;
 
-        public ApiMethod(object instance, MethodInfo info)
+        public ApiMethod(MethodInfo info)
         {
-            this.instance = instance ?? throw new ArgumentNullException(nameof(instance));
             this.info = info ?? throw new ArgumentNullException(nameof(info));
 
             Name = JsTools.NormalizeToJsName(info.Name);
@@ -46,11 +44,11 @@ namespace SpiderEye.Bridge
             HasReturnValue = ReturnType != typeof(void);
         }
 
-        public async Task<object> InvokeAsync(object parameter)
+        protected async Task<object> InvokeAsync(object instance, object parameter)
         {
-            object result;
-            if (HasParameter) { result = info.Invoke(instance, new object[] { parameter }); }
-            else { result = info.Invoke(instance, null); }
+            var result = HasParameter
+                ? info.Invoke(instance, new object[] { parameter })
+                : info.Invoke(instance, null);
 
             if (!IsAsync) { return result; }
 

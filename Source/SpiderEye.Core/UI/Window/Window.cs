@@ -166,9 +166,10 @@ namespace SpiderEye
         /// <summary>
         /// Initializes a new instance of the <see cref="Window"/> class.
         /// </summary>
-        public Window()
+        /// <param name="serviceProvider">The service provider if you wish to use dependency injection.</param>
+        public Window(IServiceProvider serviceProvider = null)
         {
-            bridge = new WebviewBridge(this);
+            bridge = new WebviewBridge(this, serviceProvider);
             NativeWindow = Application.Factory.CreateWindow(DefaultConfig, bridge);
 
             Title = DefaultConfig.Title;
