@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading;
+using SpiderEye.Mac.Interop;
 using SpiderEye.Mac.Native;
 using SpiderEye.Tools;
 
@@ -50,7 +51,17 @@ namespace SpiderEye.Mac
         internal static void ShowModal(CocoaWindow modal)
         {
             modal.Closed += ExitModal;
-            ObjC.Call(Handle, "runModalForWindow:", modal.Handle);
+
+            // https://stackoverflow.com/a/4164446/3302887
+            var session = app.BeginModalSessionForWindow(modal.Handle);
+            var result = NSModalResponse.NSModalResponseContinue;
+            while (result == NSModalResponse.NSModalResponseContinue)
+            {
+                result = app.RunModalSession(session);
+                NSRunLoop.RunLimitDate();
+            }
+
+            app.EndModalSession(session);
         }
 
         private static void ExitModal(object sender, EventArgs eventArgs)

@@ -44,6 +44,23 @@ namespace SpiderEye.Mac
             appDelegate.Dispose();
         }
 
+
+        public IntPtr BeginModalSessionForWindow(IntPtr modalHandle)
+        {
+            return ObjC.Call(Handle, "beginModalSessionForWindow:", modalHandle);
+        }
+
+        public NSModalResponse RunModalSession(IntPtr session)
+        {
+            var resp = ObjC.Call(Handle, "runModalSession:", session);
+            return (NSModalResponse)int.Parse(resp.ToString()); // no idea why this works with tostring
+        }
+
+        public void EndModalSession(IntPtr session)
+        {
+            ObjC.Call(Handle, "endModalSession:", session);
+        }
+
         private static NativeClassDefinition CreateAppDelegate()
         {
             var definition = NativeClassDefinition.FromClass(

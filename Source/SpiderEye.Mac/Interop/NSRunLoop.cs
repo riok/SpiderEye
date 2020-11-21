@@ -44,6 +44,12 @@ namespace SpiderEye.Mac.Interop
             isCompleted = true;
         }
 
+        public static void RunLimitDate()
+        {
+            var loop = Foundation.Call("NSRunLoop", "currentRunLoop");
+            ObjC.Call(loop, "limitDateForMode:", NSRunLoopMode.NSDefaultRunLoopMode);
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void Iterate()
         {
