@@ -66,6 +66,9 @@ namespace SpiderEye.Mac.Native
         public static extern IntPtr SendMessage(IntPtr self, IntPtr op, IntPtr[] a, IntPtr b);
 
         [DllImport(ObjCLib, EntryPoint = "objc_msgSend")]
+        public static extern IntPtr SendMessage(IntPtr self, IntPtr op, int a, IntPtr b);
+
+        [DllImport(ObjCLib, EntryPoint = "objc_msgSend")]
         public static extern IntPtr SendMessage(IntPtr self, IntPtr op, [MarshalAs(UnmanagedType.I1)]bool value);
 
         [DllImport(ObjCLib, EntryPoint = "objc_msgSend")]
@@ -136,12 +139,17 @@ namespace SpiderEye.Mac.Native
 
         public static IntPtr SetProperty(IntPtr id, string propertyName, bool value)
         {
-            return SetProperty(id, propertyName, Foundation.Call("NSNumber", "numberWithBool:", true));
+            return SetProperty(id, propertyName, Foundation.Call("NSNumber", "numberWithBool:", value));
+        }
+
+        public static IntPtr SetProperty(IntPtr id, string propertyName, int value)
+        {
+            return SendMessage(id, RegisterName("setValue:forKey:"), Foundation.Call("NSNumber", "numberWithInt:", value), NSString.Create(propertyName));
         }
 
         public static IntPtr SetProperty(IntPtr id, string propertyName, IntPtr value)
         {
-            return ObjC.Call(id, "setValue:forKey:", value, NSString.Create(propertyName));
+            return Call(id, "setValue:forKey:", value, NSString.Create(propertyName));
         }
     }
 }

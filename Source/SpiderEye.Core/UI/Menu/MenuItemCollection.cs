@@ -16,6 +16,13 @@ namespace SpiderEye
         }
 
         /// <summary>
+        /// if the current platform is macos this returns the macos menu collection.
+        /// Null otherwise.
+        /// This can be used to add platform specific behaviour in shared code.
+        /// </summary>
+        internal IMacOsMenuCollection MacOs => NativeMenu as IMacOsMenuCollection;
+
+        /// <summary>
         /// Gets the native menu.
         /// </summary>
         internal IMenu NativeMenu { get; }
