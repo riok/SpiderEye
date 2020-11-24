@@ -31,6 +31,8 @@ namespace SpiderEye.Mac
 
             ObjC.Call(Handle, "setActivationPolicy:", IntPtr.Zero);
             ObjC.Call(Handle, "setDelegate:", appDelegate.Handle);
+
+            ObjC.SetProperty(AppKit.GetClass("NSWindow"), "allowsAutomaticWindowTabbing", false);
         }
 
         public void Run()

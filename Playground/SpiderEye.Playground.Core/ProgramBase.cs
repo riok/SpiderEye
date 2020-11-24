@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Diagnostics;
-using System.Threading.Channels;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace SpiderEye.Playground.Core
@@ -34,10 +33,18 @@ namespace SpiderEye.Playground.Core
                 window.Navigating += (sender, uri) => Console.WriteLine("uri changed: " + uri);
 
                 var windowMenu = new Menu();
-                var appMenu = windowMenu.MenuItems.AddLabelItem(string.Empty);
+                var appMenu = windowMenu.MenuItems.AddLabelItem("App");
+                appMenu.MenuItems.AddMacOsHide();
+                appMenu.MenuItems.AddMacOsHideOtherApplications();
+                appMenu.MenuItems.AddMacOsUnhideAllApplications();
+                appMenu.MenuItems.AddMacOsSeparator();
+
                 var quitMenu = appMenu.MenuItems.AddLabelItem("Quit");
                 quitMenu.SetSystemShortcut(SystemShortcut.Close);
                 quitMenu.Click += (s, e) => Application.Exit();
+
+                windowMenu.MenuItems.AddMacOsEdit();
+                windowMenu.MenuItems.AddMacOsView();
 
                 var mainMenu = windowMenu.MenuItems.AddLabelItem("Main Menu");
                 mainMenu.MenuItems.AddLabelItem("Entry 1");
@@ -46,6 +53,8 @@ namespace SpiderEye.Playground.Core
                 var showModalMenu = mainMenu.MenuItems.AddLabelItem("Show Modal");
                 showModalMenu.Click += ShowModalMenu_Click;
                 showModalMenu.SetShortcut(ModifierKey.Control | ModifierKey.Shift, Key.M);
+
+                windowMenu.MenuItems.AddMacOsWindow();
 
                 var helpMenu = windowMenu.MenuItems.AddLabelItem("Help");
                 var helpItem = helpMenu.MenuItems.AddLabelItem("MyHelp");

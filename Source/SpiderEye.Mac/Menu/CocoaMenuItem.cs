@@ -3,7 +3,7 @@ using SpiderEye.Mac.Native;
 
 namespace SpiderEye.Mac
 {
-    internal abstract class CocoaMenuItem : IMenuItem
+    internal abstract class CocoaMenuItem : CocoaBaseMenu, IMenuItem
     {
         public readonly IntPtr Handle;
 
@@ -22,7 +22,7 @@ namespace SpiderEye.Mac
             // don't think anything needs to be done here
         }
 
-        protected sealed class CocoaSubMenu : IMenu
+        protected sealed class CocoaSubMenu : CocoaBaseMenu, IMenu
         {
             public string Title
             {

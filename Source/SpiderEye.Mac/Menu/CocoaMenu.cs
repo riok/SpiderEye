@@ -5,7 +5,7 @@ using SpiderEye.Tools;
 
 namespace SpiderEye.Mac
 {
-    internal class CocoaMenu : IMenu
+    internal class CocoaMenu : CocoaBaseMenu, IMenu
     {
         public string Title
         {

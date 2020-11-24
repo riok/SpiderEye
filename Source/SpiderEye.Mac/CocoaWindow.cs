@@ -142,7 +142,7 @@ namespace SpiderEye.Mac
             set
             {
                 titleBarTransparentField = value;
-                ObjC.SetProperty(Handle, "titlebarAppearsTransparent", true);
+                ObjC.SetProperty(Handle, "titlebarAppearsTransparent", value);
             }
         }
 
