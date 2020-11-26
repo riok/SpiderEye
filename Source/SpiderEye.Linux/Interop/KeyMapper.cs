@@ -123,6 +123,7 @@ namespace SpiderEye.UI.Platforms.Linux.Interop
             { Key.Insert, "<Insert>" },
             { Key.Delete, "<Delete>" },
             { Key.QuestionMark, "?" },
+            { Key.QuestionMark, "," },
         };
     }
 }

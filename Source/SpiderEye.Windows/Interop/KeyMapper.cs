@@ -126,6 +126,7 @@ namespace SpiderEye.Windows.Interop
             { Key.Insert, Keys.Insert },
             { Key.Delete, Keys.Delete },
             { Key.QuestionMark, Keys.OemQuestion },
+            { Key.Comma, Keys.Oemcomma },
         };
     }
 }

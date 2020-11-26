@@ -112,6 +112,7 @@ namespace SpiderEye.Mac.Interop
             { Key.Insert, NSKey.Insert },
             { Key.Delete, "\0x007f" }, // Note: different than NSKey.Delete
             { Key.QuestionMark, "?" },
+            { Key.Comma, "," },
         };
     }
 }
