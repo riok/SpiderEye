@@ -15,7 +15,7 @@ export class SpiderEyeService {
         return from(SpiderEye.invokeApiAsync(id, params))
             .pipe(map(t => {
                 if (!t.success) {
-                    throw new Error(t.error);
+                    throw new Error(t.errorDetail);
                 }
 
                 return t.value;

@@ -15,6 +15,7 @@ namespace SpiderEye.Bridge.Models
 
         public bool Success { get; set; }
         public string Error { get; set; }
+        public string ErrorDetail { get; set; }
 
         [JsonProperty(nameof(Value))]
         private JRaw ValueRaw { get; set; }
@@ -36,6 +37,7 @@ namespace SpiderEye.Bridge.Models
                 Value = null,
                 Success = false,
                 Error = exception.Message,
+                ErrorDetail = exception.ToString(),
             };
         }
     }
