@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Drawing;
+using System.IO;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Microsoft.Web.WebView2.Core;
@@ -37,6 +38,7 @@ namespace SpiderEye.Windows
 
         // Note: We currently can't use a custom scheme, since the WebView2 doesn't support it yet
         private const string CustomScheme = "http";
+        private const string WebView2UserDataFolder = "SpiderEyeWebView2";
         private readonly WebviewBridge bridge;
         private readonly Uri customHost;
         private WebView2 webview;
@@ -92,7 +94,9 @@ namespace SpiderEye.Windows
 
         private async void InitializeWebView()
         {
-            webView2Environment = await CoreWebView2Environment.CreateAsync();
+            var tempFolder = Path.GetTempPath();
+            var webView2UserDataFolder = Path.Combine(tempFolder, WebView2UserDataFolder);
+            webView2Environment = await CoreWebView2Environment.CreateAsync(null, webView2UserDataFolder);
             await webview.EnsureCoreWebView2Async(webView2Environment);
         }
 
