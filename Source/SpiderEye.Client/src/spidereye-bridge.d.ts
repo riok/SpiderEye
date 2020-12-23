@@ -22,5 +22,7 @@ export interface ApiResult<T> {
     value: T;
     success: boolean;
     error: string;
+    errorTypeName: string;
+    errorTypeFullName: string;
     errorDetail: string;
 }
