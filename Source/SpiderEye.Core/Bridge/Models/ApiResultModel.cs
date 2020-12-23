@@ -15,6 +15,8 @@ namespace SpiderEye.Bridge.Models
 
         public bool Success { get; set; }
         public string Error { get; set; }
+        public string ErrorTypeName { get; set; }
+        public string ErrorTypeFullName { get; set; }
         public string ErrorDetail { get; set; }
 
         [JsonProperty(nameof(Value))]
@@ -37,6 +39,8 @@ namespace SpiderEye.Bridge.Models
                 Value = null,
                 Success = false,
                 Error = exception.Message,
+                ErrorTypeName = exception.GetType().Name,
+                ErrorTypeFullName = exception.GetType().FullName,
                 ErrorDetail = exception.ToString(),
             };
         }
