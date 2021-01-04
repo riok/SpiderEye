@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Threading.Tasks;
@@ -57,7 +58,7 @@ namespace SpiderEye.Windows
 
             webview.NavigationCompleted += Webview_NavigationCompleted;
             webview.NavigationStarting += Webview_NavigationStarting;
-            webview.CoreWebView2Ready += Webview_CoreWebView2Ready;
+            webview.CoreWebView2InitializationCompleted += WebViewInitializationCompleted;
 
             customHost = new Uri(UriTools.GetRandomResourceUrl(CustomScheme));
         }
@@ -100,7 +101,7 @@ namespace SpiderEye.Windows
             await webview.EnsureCoreWebView2Async(webView2Environment);
         }
 
-        private async void Webview_CoreWebView2Ready(object sender, EventArgs e)
+        private async void WebViewInitializationCompleted(object sender, EventArgs e)
         {
             EnableScriptInterface = initialWebMessageEnabled;
 

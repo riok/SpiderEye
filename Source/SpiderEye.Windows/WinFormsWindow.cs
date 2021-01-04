@@ -2,11 +2,9 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
-using System.IO;
 using System.Windows.Forms;
 using SpiderEye.Bridge;
 using SpiderEye.Tools;
-using SpiderEye.Windows.Interop;
 using SDSize = System.Drawing.Size;
 
 namespace SpiderEye.Windows
@@ -21,6 +19,7 @@ namespace SpiderEye.Windows
 
         private bool hasExistingMenu;
         private Menu menu;
+        private readonly List<ToolStripMenuItem> shortcutItems = new List<ToolStripMenuItem>();
         private event CancelableEventHandler ClosingBackingEvent;
 
         public string Title
@@ -117,24 +116,29 @@ namespace SpiderEye.Windows
         {
             if (bridge == null) { throw new ArgumentNullException(nameof(bridge)); }
 
-            var webviewType = ChooseWebview();
-            switch (webviewType)
-            {
-                case WebviewType.InternetExplorer:
-                    webview = new WinFormsLegacyWebview(WindowsApplication.ContentServerAddress, bridge);
-                    break;
-
-                case WebviewType.Edge:
-                    webview = new WinFormsWebview(bridge);
-                    break;
-
-                default:
-                    throw new InvalidOperationException($"Invalid webview type of {webviewType}");
-            }
-
+            webview = new WinFormsWebview(bridge);
             webview.Control.Location = new Point(0, 0);
             webview.Control.Dock = DockStyle.Fill;
+            webview.Control.KeyDown += WebViewKeyDown;
             Controls.Add(webview.Control);
+        }
+
+        private void WebViewKeyDown(object sender, KeyEventArgs e)
+        {
+            // When the webview is focused, no key events arrive in the parent form (see https://github.com/MicrosoftEdge/WebView2Feedback/issues/468)
+            // So this is a workaround to trigger all the shortcuts
+            var pressedKeys = ModifierKeys | e.KeyCode;
+
+            foreach (var shortcutItem in shortcutItems)
+            {
+                if (shortcutItem.ShortcutKeys == pressedKeys)
+                {
+                    shortcutItem.PerformClick();
+                    e.Handled = true;
+                    e.SuppressKeyPress = true;
+                    return;
+                }
+            }
         }
 
         public void SetWindowState(WindowState state)
@@ -182,37 +186,13 @@ namespace SpiderEye.Windows
         protected override void Dispose(bool disposing)
         {
             base.Dispose(disposing);
-
             webview.Dispose();
-        }
-
-        private WebviewType ChooseWebview()
-        {
-            switch (WindowsApplication.WebviewType)
-            {
-                case WebviewType.Edge:
-                case WebviewType.Latest:
-                    if (IsEdgeAvailable()) { return WebviewType.Edge; }
-                    else { return WebviewType.InternetExplorer; }
-
-                case WebviewType.InternetExplorer:
-                    return WebviewType.InternetExplorer;
-
-                default:
-                    return WindowsApplication.WebviewType;
-            }
-        }
-
-        private bool IsEdgeAvailable()
-        {
-            string path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "edgehtml.dll");
-            var version = WinNative.GetOsVersion();
-
-            return File.Exists(path) && version.MajorVersion >= 10 && version.BuildNumber >= 17134;
         }
 
         private void SetMenu(Menu menu)
         {
+            shortcutItems.Clear();
+
             MenuStrip mainMenu;
             if (!hasExistingMenu)
             {
@@ -240,9 +220,31 @@ namespace SpiderEye.Windows
             foreach (ToolStripItem i in nativeMenu.Items)
             {
                 menuItems.Add(i);
+                AddShortcutItems(i);
             }
 
             mainMenu.Items.AddRange(menuItems.ToArray());
+        }
+
+        private void AddShortcutItems(ToolStripItem item)
+        {
+            if (item is not ToolStripMenuItem menuItem)
+            {
+                return;
+            }
+
+            if (menuItem.ShortcutKeys != Keys.None)
+            {
+                shortcutItems.Add(menuItem);
+            }
+
+            if (menuItem.HasDropDownItems)
+            {
+                foreach (ToolStripItem dropdownItem in menuItem.DropDownItems)
+                {
+                    AddShortcutItems(dropdownItem);
+                }
+            }
         }
     }
 }
