@@ -49,6 +49,11 @@ namespace SpiderEye
         public static OperatingSystem OS { get; }
 
         /// <summary>
+        /// Gets or sets the error mapper.
+        /// </summary>
+        public static ErrorMapper ErrorMapper { get; set; }
+
+        /// <summary>
         /// Gets the UI factory.
         /// </summary>
         internal static IUiFactory Factory
@@ -71,6 +76,7 @@ namespace SpiderEye
             contentProvider = NoopContentProvider.Instance;
             uriWatcher = NoopUriWatcher.Instance;
             OpenWindows = new WindowCollection();
+            ErrorMapper = new ErrorMapper();
         }
 
         /// <summary>
