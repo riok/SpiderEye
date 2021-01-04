@@ -24,5 +24,6 @@ export interface ApiResult<T> {
     error: string;
     errorTypeName: string;
     errorTypeFullName: string;
+    isUiFriendlyError: boolean;
     errorDetail: string;
 }
