@@ -203,8 +203,8 @@ namespace SpiderEye.Bridge
                         Value = info.HasReturnValue ? JsonConverter.Serialize(result) : null,
                     };
                 }
-                catch (TargetInvocationException tex) { return ApiResultModel.FromError(tex.InnerException ?? tex); }
-                catch (Exception ex) { return ApiResultModel.FromError(ex); }
+                catch (TargetInvocationException tex) { return Application.ErrorMapper.MapErrorToApiResult(tex.InnerException ?? tex); }
+                catch (Exception ex) { return Application.ErrorMapper.MapErrorToApiResult(ex); }
             }
             else { return ApiResultModel.FromError($"Unknown API call \"{id}\"."); }
         }

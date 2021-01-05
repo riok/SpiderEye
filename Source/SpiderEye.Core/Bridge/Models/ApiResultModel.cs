@@ -1,11 +1,9 @@
-﻿using System;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using SpiderEye.UI;
 
 namespace SpiderEye.Bridge.Models
 {
-    internal class ApiResultModel
+    public class ApiResultModel
     {
         [JsonIgnore]
         public string Value
@@ -31,29 +29,6 @@ namespace SpiderEye.Bridge.Models
                 Value = null,
                 Success = false,
                 Error = message,
-            };
-        }
-
-        public static ApiResultModel FromError(Exception exception)
-        {
-            var error = exception.Message;
-            var isUiFriendlyError = false;
-
-            if (exception is IUiFriendlyException uiException)
-            {
-                error = uiException.UiMessage;
-                isUiFriendlyError = true;
-            }
-
-            return new ApiResultModel
-            {
-                Value = null,
-                Success = false,
-                Error = error,
-                ErrorTypeName = exception.GetType().Name,
-                ErrorTypeFullName = exception.GetType().FullName,
-                IsUiFriendlyError = isUiFriendlyError,
-                ErrorDetail = exception.ToString(),
             };
         }
     }
