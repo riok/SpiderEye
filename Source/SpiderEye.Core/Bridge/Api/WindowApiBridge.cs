@@ -9,17 +9,19 @@ namespace SpiderEye.Bridge.Api
     {
         private static readonly WindowCollection WindowStore = new WindowCollection();
         private readonly Window parent;
+        private readonly IServiceProvider serviceProvider;
 
-        public WindowApiBridge(Window parent)
+        public WindowApiBridge(Window parent, IServiceProvider serviceProvider)
         {
             this.parent = parent ?? throw new ArgumentNullException(nameof(parent));
+            this.serviceProvider = serviceProvider;
         }
 
         public void Show(BrowserWindowConfigModel config)
         {
             Application.Invoke(() =>
             {
-                var window = new Window
+                var window = new Window(serviceProvider)
                 {
                     Title = config.Title ?? Window.DefaultConfig.Title,
                     Size = new Size(
