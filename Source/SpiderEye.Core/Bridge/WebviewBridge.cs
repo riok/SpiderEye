@@ -260,7 +260,7 @@ namespace SpiderEye.Bridge
 
         private void InitApi()
         {
-            AddApiObject(new WindowApiBridge(window));
+            AddApiObject(new WindowApiBridge(window, serviceProvider));
             AddApiObject(new DialogApiBridge(window));
 
             lock (GlobalHandlerLock)

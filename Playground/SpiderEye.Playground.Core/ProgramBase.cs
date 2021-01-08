@@ -7,6 +7,7 @@ namespace SpiderEye.Playground.Core
     public abstract class ProgramBase
     {
         private static Window _mainWindow;
+        private static ServiceProvider _serviceProvider;
 
         protected static void Run()
         {
@@ -16,6 +17,7 @@ namespace SpiderEye.Playground.Core
             serviceCollection.AddScoped<UiBridge>();
             Application.AddGlobalHandler<UiBridge>();
             using var serviceProvider = serviceCollection.BuildServiceProvider();
+            _serviceProvider = serviceProvider;
 
             using (var statusIcon = new StatusIcon())
             using (var window = new Window(serviceProvider))
@@ -51,8 +53,12 @@ namespace SpiderEye.Playground.Core
                 mainMenu.MenuItems.AddSeparatorItem();
                 mainMenu.MenuItems.AddLabelItem("Entry 2");
                 var showModalMenu = mainMenu.MenuItems.AddLabelItem("Show Modal");
-                showModalMenu.Click += ShowModalMenu_Click;
+                showModalMenu.Click += (s, e) => ShowModalMenu_Click(true);
                 showModalMenu.SetShortcut(ModifierKey.Control | ModifierKey.Shift, Key.M);
+
+                var showWindowMenu = mainMenu.MenuItems.AddLabelItem("Show Window");
+                showWindowMenu.Click += (s, e) => ShowModalMenu_Click(false);
+                showWindowMenu.SetShortcut(ModifierKey.Control | ModifierKey.Shift, Key.W);
 
                 windowMenu.MenuItems.AddMacOsWindow();
 
@@ -99,22 +105,30 @@ namespace SpiderEye.Playground.Core
             }
         }
 
-        private static void ShowModalMenu_Click(object sender, EventArgs e)
+        private static void ShowModalMenu_Click(bool modal)
         {
-            var modal = new Window { Title = "this is a modal" };
-            modal.Closed += DisposeWindow;
-            modal.UseBrowserTitle = true;
-            modal.LoadUrl("https://www.google.com/search?q=foo%20bar");
+            var window = new Window(_serviceProvider) { Title = "this is a modal" };
+            window.Closed += DisposeWindow;
+            window.UseBrowserTitle = true;
+            window.LoadUrl("https://www.google.com/search?q=foo%20bar");
 
-            modal.Navigating += (x, args) =>
+            window.Navigating += (x, args) =>
             {
                 if (args.Url.Host.EndsWith("wikipedia.org", StringComparison.Ordinal))
                 {
                     args.Cancel = true;
-                    modal.Close();
+                    window.Close();
                 }
             };
-            _mainWindow.ShowModal(modal);
+
+            if (modal)
+            {
+                _mainWindow.ShowModal(window);
+            }
+            else
+            {
+                window.Show();
+            }
         }
 
         private static void DisposeWindow(object sender, EventArgs e)

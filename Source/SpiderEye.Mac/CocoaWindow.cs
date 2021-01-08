@@ -259,7 +259,7 @@ namespace SpiderEye.Mac
                 {
                     var instance = definition.GetParent<CocoaWindow>(self);
                     var args = new CancelableEventArgs();
-                    instance.Closing?.Invoke(instance, args);
+                    instance?.Closing?.Invoke(instance, args);
 
                     return args.Cancel ? (byte)0 : (byte)1;
                 });
@@ -270,7 +270,7 @@ namespace SpiderEye.Mac
                 (self, op, notification) =>
                 {
                     var instance = definition.GetParent<CocoaWindow>(self);
-                    instance.SetMenu();
+                    instance?.SetMenu();
                 });
 
             definition.AddMethod<NotificationDelegate>(
@@ -279,8 +279,11 @@ namespace SpiderEye.Mac
                 (self, op, notification) =>
                 {
                     var instance = definition.GetParent<CocoaWindow>(self);
-                    instance.webview.TitleChanged -= instance.Webview_TitleChanged;
-                    instance.Closed?.Invoke(instance, EventArgs.Empty);
+                    if (instance != null)
+                    {
+                        instance.webview.TitleChanged -= instance.Webview_TitleChanged;
+                        instance.Closed?.Invoke(instance, EventArgs.Empty);
+                    }
                 });
 
             definition.FinishDeclaration();

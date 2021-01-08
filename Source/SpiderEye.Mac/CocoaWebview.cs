@@ -160,6 +160,11 @@ namespace SpiderEye.Mac
                 (self, op, view, navigationAction, decisionHandler) =>
                 {
                     var instance = definition.GetParent<CocoaWebview>(self);
+                    if (instance == null)
+                    {
+                        return;
+                    }
+
                     var args = new NavigatingEventArgs(instance.Uri);
                     instance.Navigating?.Invoke(instance, args);
 
@@ -174,7 +179,7 @@ namespace SpiderEye.Mac
                 (self, op, view, navigation) =>
                 {
                     var instance = definition.GetParent<CocoaWebview>(self);
-                    instance.PageLoaded?.Invoke(instance, new PageLoadEventArgs(true));
+                    instance?.PageLoaded?.Invoke(instance, new PageLoadEventArgs(true));
                 });
 
             definition.AddMethod<LoadFailedDelegate>(
@@ -183,7 +188,7 @@ namespace SpiderEye.Mac
                 (self, op, view, navigation, error) =>
                 {
                     var instance = definition.GetParent<CocoaWebview>(self);
-                    instance.PageLoaded?.Invoke(instance, new PageLoadEventArgs(false));
+                    instance?.PageLoaded?.Invoke(instance, new PageLoadEventArgs(false));
                 });
 
             definition.AddMethod<ObserveValueDelegate>(
@@ -192,7 +197,10 @@ namespace SpiderEye.Mac
                 (self, op, keyPath, obj, change, context) =>
                 {
                     var instance = definition.GetParent<CocoaWebview>(self);
-                    ObservedValueChanged(instance, keyPath);
+                    if (instance != null)
+                    {
+                        ObservedValueChanged(instance, keyPath);
+                    }
                 });
 
             definition.AddMethod<ScriptCallbackDelegate>(
@@ -201,7 +209,10 @@ namespace SpiderEye.Mac
                 (self, op, notification, message) =>
                 {
                     var instance = definition.GetParent<CocoaWebview>(self);
-                    ScriptCallback(instance, message);
+                    if (instance != null)
+                    {
+                        ScriptCallback(instance, message);
+                    }
                 });
 
             definition.FinishDeclaration();
@@ -222,7 +233,10 @@ namespace SpiderEye.Mac
                 (self, op, view, schemeTask) =>
                 {
                     var instance = definition.GetParent<CocoaWebview>(self);
-                    UriSchemeStartCallback(instance, schemeTask);
+                    if (instance != null)
+                    {
+                        UriSchemeStartCallback(instance, schemeTask);
+                    }
                 });
 
             definition.AddMethod<SchemeHandlerDelegate>(

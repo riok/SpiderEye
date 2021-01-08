@@ -110,7 +110,7 @@ namespace SpiderEye.Mac
                 (self, op, menu) =>
                 {
                     var instance = definition.GetParent<CocoaLabelMenuItem>(self);
-                    instance.Click?.Invoke(instance, EventArgs.Empty);
+                    instance?.Click?.Invoke(instance, EventArgs.Empty);
                 });
 
             definition.FinishDeclaration();
