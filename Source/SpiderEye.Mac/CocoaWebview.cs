@@ -12,7 +12,6 @@ namespace SpiderEye.Mac
     internal class CocoaWebview : IWebview
     {
         public event NavigatingEventHandler Navigating;
-        public event PageLoadEventHandler PageLoaded;
         public event EventHandler<string> TitleChanged;
 
         public bool EnableScriptInterface { get; set; }
@@ -171,24 +170,6 @@ namespace SpiderEye.Mac
                     var block = Marshal.PtrToStructure<NSBlock.BlockLiteral>(decisionHandler);
                     var callback = Marshal.GetDelegateForFunctionPointer<NavigationDecisionDelegate>(block.Invoke);
                     callback(decisionHandler, args.Cancel ? IntPtr.Zero : new IntPtr(1));
-                });
-
-            definition.AddMethod<LoadFinishedDelegate>(
-                "webView:didFinishNavigation:",
-                "v@:@@",
-                (self, op, view, navigation) =>
-                {
-                    var instance = definition.GetParent<CocoaWebview>(self);
-                    instance?.PageLoaded?.Invoke(instance, new PageLoadEventArgs(true));
-                });
-
-            definition.AddMethod<LoadFailedDelegate>(
-                "webView:didFailNavigation:withError:",
-                "v@:@@@",
-                (self, op, view, navigation, error) =>
-                {
-                    var instance = definition.GetParent<CocoaWebview>(self);
-                    instance?.PageLoaded?.Invoke(instance, new PageLoadEventArgs(false));
                 });
 
             definition.AddMethod<ObserveValueDelegate>(

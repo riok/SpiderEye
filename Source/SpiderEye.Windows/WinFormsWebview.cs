@@ -14,8 +14,6 @@ namespace SpiderEye.Windows
     internal class WinFormsWebview : IWebview, IWinFormsWebview
     {
         public event NavigatingEventHandler Navigating;
-        public event PageLoadEventHandler PageLoaded;
-
 
         public Control Control
         {
@@ -56,7 +54,6 @@ namespace SpiderEye.Windows
 
             webview.WebMessageReceived += Webview_WebMessageReceived;
 
-            webview.NavigationCompleted += Webview_NavigationCompleted;
             webview.NavigationStarting += Webview_NavigationStarting;
             webview.CoreWebView2InitializationCompleted += WebViewInitializationCompleted;
 
@@ -155,11 +152,6 @@ namespace SpiderEye.Windows
             var args = new NavigatingEventArgs(new Uri(e.Uri));
             Navigating?.Invoke(this, args);
             e.Cancel = args.Cancel;
-        }
-
-        private void Webview_NavigationCompleted(object sender, CoreWebView2NavigationCompletedEventArgs e)
-        {
-            PageLoaded?.Invoke(this, new PageLoadEventArgs(e.IsSuccess));
         }
     }
 }
