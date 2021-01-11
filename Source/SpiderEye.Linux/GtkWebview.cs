@@ -13,7 +13,6 @@ namespace SpiderEye.Linux
     internal class GtkWebview : IWebview
     {
         public event NavigatingEventHandler Navigating;
-        public event PageLoadEventHandler PageLoaded;
 
         public event EventHandler CloseRequested;
         public event EventHandler<string> TitleChanged;
@@ -271,7 +270,6 @@ namespace SpiderEye.Linux
             // this event is called when there is an error, immediately afterwards the LoadCallback is called with state Finished.
             // to indicate that there was an error and the PageLoaded event has been invoked, the loadEventHandled variable is set to true.
             loadEventHandled = true;
-            PageLoaded?.Invoke(this, new PageLoadEventArgs(false));
 
             return false;
         }
@@ -303,7 +301,6 @@ namespace SpiderEye.Linux
                 if (EnableDevTools) { ShowDevTools(); }
 
                 loadEventHandled = true;
-                PageLoaded?.Invoke(this, new PageLoadEventArgs(true));
             }
         }
 

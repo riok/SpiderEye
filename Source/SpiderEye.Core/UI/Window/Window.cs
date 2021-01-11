@@ -16,11 +16,6 @@ namespace SpiderEye
         public event NavigatingEventHandler Navigating;
 
         /// <summary>
-        /// Fires once the content in the webview has loaded.
-        /// </summary>
-        public event PageLoadEventHandler PageLoaded;
-
-        /// <summary>
         /// Fires when the window is shown.
         /// </summary>
         public event EventHandler Shown;
@@ -184,7 +179,6 @@ namespace SpiderEye
 
             bridge.TitleChanged += Bridge_TitleChanged;
 
-            NativeWindow.Webview.PageLoaded += NativeWindow_PageLoaded;
             NativeWindow.Webview.Navigating += NativeWindow_Navigating;
 
             NativeWindow.Shown += NativeWindow_Shown;
@@ -253,11 +247,6 @@ namespace SpiderEye
             }
         }
 
-        private void NativeWindow_PageLoaded(object sender, PageLoadEventArgs e)
-        {
-            PageLoaded?.Invoke(this, e);
-        }
-
         private void NativeWindow_Navigating(object sender, NavigatingEventArgs e)
         {
             Navigating?.Invoke(this, e);
@@ -291,7 +280,6 @@ namespace SpiderEye
             NativeWindow.Closing -= NativeWindow_Closing;
             NativeWindow.Shown -= NativeWindow_Shown;
 
-            NativeWindow.Webview.PageLoaded -= NativeWindow_PageLoaded;
             NativeWindow.Webview.Navigating -= NativeWindow_Navigating;
         }
     }

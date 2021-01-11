@@ -14,11 +14,6 @@ namespace SpiderEye
         event NavigatingEventHandler Navigating;
 
         /// <summary>
-        /// Fires once the content in this webview has loaded.
-        /// </summary>
-        event PageLoadEventHandler PageLoaded;
-
-        /// <summary>
         /// Loads the given URI.
         /// </summary>
         /// <param name="uri">The URI to load.</param>

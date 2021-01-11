@@ -154,20 +154,6 @@ namespace SpiderEye.Playground.Core
         private static void SetDevSettings(Window window)
         {
             window.EnableDevTools = true;
-            window.PageLoaded += (s, e) =>
-            {
-                if (!e.Success)
-                {
-                    string message = $"Page did not load!{Environment.NewLine}Did you start the Angular dev server?";
-                    if (Application.OS == OperatingSystem.Windows)
-                    {
-                        message +=
-                            $"{Environment.NewLine}On Windows 10 you also have to allow localhost. More info can be found in the SpiderEye readme.";
-                    }
-
-                    MessageBox.Show(window, message, "Page load failed", MessageBoxButtons.Ok);
-                }
-            };
         }
     }
 }
