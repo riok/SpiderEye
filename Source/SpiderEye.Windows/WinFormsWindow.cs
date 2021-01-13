@@ -200,6 +200,9 @@ namespace SpiderEye.Windows
                 MainMenuStrip = mainMenu;
                 Controls.Add(MainMenuStrip);
                 hasExistingMenu = true;
+
+                MainMenuStrip.Click += MainMenuStrip_Click;
+                MainMenuStrip.LostFocus += MainMenuStrip_LostFocus;
             }
             else
             {
@@ -224,6 +227,30 @@ namespace SpiderEye.Windows
             }
 
             mainMenu.Items.AddRange(menuItems.ToArray());
+        }
+
+        private void MainMenuStrip_Click(object sender, EventArgs e)
+        {
+            // without this, the main menu strip never receives focus (focus is always on the WebView)
+            MainMenuStrip.Focus();
+        }
+
+        private void MainMenuStrip_LostFocus(object sender, EventArgs e)
+        {
+            if (MainMenuStrip == null)
+            {
+                return;
+            }
+
+            // Workaround, the menu somehow is never hidden if the webview is clicked
+            foreach (ToolStripItem item in MainMenuStrip.Items)
+            {
+                if (item is ToolStripMenuItem menuItem && menuItem.HasDropDown && menuItem.DropDown.Visible)
+                {
+                    menuItem.DropDown.Hide();
+                    break;
+                }
+            }
         }
 
         private void AddShortcutItems(ToolStripItem item)
