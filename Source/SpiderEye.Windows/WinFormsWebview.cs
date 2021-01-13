@@ -94,7 +94,17 @@ namespace SpiderEye.Windows
         {
             var tempFolder = Path.GetTempPath();
             var webView2UserDataFolder = Path.Combine(tempFolder, WebView2UserDataFolder);
-            webView2Environment = await CoreWebView2Environment.CreateAsync(null, webView2UserDataFolder);
+
+            try
+            {
+                webView2Environment = await CoreWebView2Environment.CreateAsync(null, webView2UserDataFolder);
+            }
+            catch (WebView2RuntimeNotFoundException)
+            {
+                MessageBox.Show("The WebView2 isn't installed. It is required for this app.");
+                Environment.Exit(-1);
+            }
+
             await webview.EnsureCoreWebView2Async(webView2Environment);
         }
 
