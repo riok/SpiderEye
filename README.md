@@ -18,7 +18,6 @@ What's the name supposed to mean? Simple: what kind of view does a spiders eye h
 | ----- | ----- | ----- |
 | libgtk-3 | Application and window handling | No |
 | libwebkit2gtk-4.0 | Webview | No |
-| libappindicator3 | Status icon | Yes |
 
 ## Installation
 

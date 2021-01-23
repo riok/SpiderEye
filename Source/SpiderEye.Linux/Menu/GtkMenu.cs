@@ -1,30 +1,40 @@
 using System;
-using SpiderEye.Linux.Native;
+using System.Collections.Generic;
 using SpiderEye.Tools;
 
 namespace SpiderEye.Linux
 {
     internal class GtkMenu : IMenu
     {
-        public readonly IntPtr Handle;
-
-        public GtkMenu()
-        {
-            Handle = Gtk.Menu.Create();
-        }
+        private readonly List<GtkMenuItem> menuItems = new List<GtkMenuItem>();
 
         public void AddItem(IMenuItem item)
         {
             if (item == null) { throw new ArgumentNullException(nameof(item)); }
 
             var nativeItem = NativeCast.To<GtkMenuItem>(item);
-            Gtk.Menu.AddItem(Handle, nativeItem.Handle);
-            Gtk.Widget.Show(nativeItem.Handle);
+            menuItems.Add(nativeItem);
+        }
+
+        public IEnumerable<GtkMenuItem> GetItems()
+        {
+            return menuItems;
+        }
+
+        public void SetAccelGroup(IntPtr handle)
+        {
+            foreach (var item in menuItems)
+            {
+                item.SetAccelGroup(handle);
+            }
         }
 
         public void Dispose()
         {
-            Gtk.Widget.Destroy(Handle);
+            foreach (var item in menuItems)
+            {
+                item.Dispose();
+            }
         }
     }
 }

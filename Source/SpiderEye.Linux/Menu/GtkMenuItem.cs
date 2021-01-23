@@ -6,6 +6,7 @@ namespace SpiderEye.Linux
     internal class GtkMenuItem : IMenuItem
     {
         public readonly IntPtr Handle;
+        protected GtkSubMenu subMenu;
 
         protected GtkMenuItem(IntPtr handle)
         {
@@ -14,41 +15,21 @@ namespace SpiderEye.Linux
 
         public IMenu CreateSubMenu()
         {
-            return new GtkSubMenu(Handle);
+            if (subMenu == null)
+            {
+                subMenu = new GtkSubMenu(Handle);
+            }
+
+            return subMenu;
+        }
+
+        public virtual void SetAccelGroup(IntPtr accelGroupHandle)
+        {
         }
 
         public void Dispose()
         {
             Gtk.Widget.Destroy(Handle);
-        }
-
-        private sealed class GtkSubMenu : IMenu
-        {
-            private readonly IntPtr menuItem;
-            private GtkMenu menu;
-
-            public GtkSubMenu(IntPtr menuItem)
-            {
-                this.menuItem = menuItem;
-            }
-
-            public void AddItem(IMenuItem item)
-            {
-                if (item == null) { throw new ArgumentNullException(nameof(item)); }
-
-                if (menu == null)
-                {
-                    menu = new GtkMenu();
-                    Gtk.Menu.SetSubmenu(menuItem, menu.Handle);
-                }
-
-                menu.AddItem(item);
-            }
-
-            public void Dispose()
-            {
-                menu.Dispose();
-            }
         }
     }
 }

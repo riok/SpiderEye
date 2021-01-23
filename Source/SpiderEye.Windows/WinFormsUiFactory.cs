@@ -9,11 +9,6 @@ namespace SpiderEye.Windows
             return new WinFormsWindow(bridge);
         }
 
-        public IStatusIcon CreateStatusIcon(string title)
-        {
-            return new WinFormsStatusIcon(title);
-        }
-
         public IMessageBox CreateMessageBox()
         {
             return new WinFormsMessageBox();

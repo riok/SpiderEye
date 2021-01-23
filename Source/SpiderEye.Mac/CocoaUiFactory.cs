@@ -9,11 +9,6 @@ namespace SpiderEye.Mac
             return new CocoaWindow(config, bridge);
         }
 
-        public IStatusIcon CreateStatusIcon(string title)
-        {
-            return new CocoaStatusIcon(title);
-        }
-
         public IMessageBox CreateMessageBox()
         {
             return new CocoaMessageBox();

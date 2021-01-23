@@ -9,11 +9,6 @@ namespace SpiderEye.Linux
             return new GtkWindow(bridge);
         }
 
-        public IStatusIcon CreateStatusIcon(string title)
-        {
-            return new GtkStatusIcon(title);
-        }
-
         public IMessageBox CreateMessageBox()
         {
             return new GtkMessageBox();

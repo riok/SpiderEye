@@ -16,13 +16,6 @@ namespace SpiderEye
         IWindow CreateWindow(WindowConfiguration config, WebviewBridge bridge);
 
         /// <summary>
-        /// Creates a new status icon.
-        /// </summary>
-        /// <param name="title">The status icon title.</param>
-        /// <returns>The created status icon.</returns>
-        IStatusIcon CreateStatusIcon(string title);
-
-        /// <summary>
         /// Creates a new message box.
         /// </summary>
         /// <returns>The created message box.</returns>

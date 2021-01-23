@@ -1,23 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
+using SpiderEye.Linux.Interop;
 using SpiderEye.Tools;
 
 namespace SpiderEye.UI.Platforms.Linux.Interop
 {
     internal static class KeyMapper
     {
-        public static string GetShortcut(ModifierKey modifier, Key key)
-        {
-            if (modifier == ModifierKey.None && key == Key.None) { return null; }
-
-            var builder = new StringBuilder();
-            MapModifier(builder, modifier);
-            MapKey(builder, key);
-
-            return builder.ToString();
-        }
-
         public static (ModifierKey ModifierKey, Key Key) ResolveSystemShortcut(SystemShortcut systemShortcut)
         {
             return systemShortcut switch
@@ -28,101 +16,76 @@ namespace SpiderEye.UI.Platforms.Linux.Interop
             };
         }
 
-        private static void MapModifier(StringBuilder builder, ModifierKey modifier)
+        public static uint MapKey(Key key)
         {
+            if (key >= Key.F1 && key <= Key.F12)
+            {
+                uint f1 = 0xFFBE;
+                var fKey = StripKeyMask(key, KeyMask.Function);
+                return f1 + (uint)fKey - 1;
+            }
+
+            if (key >= Key.Number0 && key <= Key.Number9)
+            {
+                uint key0 = 0x030;
+                var number = StripKeyMask(key, KeyMask.Number);
+                if (number == 10)
+                {
+                    number = 0;
+                }
+
+                return key0 + (uint)number;
+            }
+
+            if (key >= Key.A && key <= Key.Z)
+            {
+                uint a = 0x061;
+                var number = StripKeyMask(key, KeyMask.Alphabet);
+                return a + (uint)number - 1;
+            }
+
+            return 0;
+        }
+
+        public static GdkModifierType MapModifier(ModifierKey modifier)
+        {
+            var modifierType = GdkModifierType.None;
+
             foreach (var flag in EnumTools.GetFlags(modifier))
             {
-                string value;
                 switch (flag)
                 {
                     case ModifierKey.None:
                         continue;
 
                     case ModifierKey.Shift:
-                        value = "<Shift>";
+                        modifierType |= GdkModifierType.Shift;
                         break;
 
+                    case ModifierKey.Primary:
                     case ModifierKey.Control:
-                        value = "<Control>";
+                        modifierType |= GdkModifierType.Control;
                         break;
 
                     case ModifierKey.Alt:
-                        value = "<Alt>";
+                        modifierType |= GdkModifierType.Mod1;
                         break;
 
                     case ModifierKey.Super:
-                    case ModifierKey.Primary:
-                        value = "<Super>";
+                        modifierType |= GdkModifierType.Super;
                         break;
 
                     default:
                         throw new NotSupportedException($"Unsupported modifier key: \"{flag}\"");
                 }
-
-                builder.Append(value);
             }
+
+            return modifierType;
         }
 
-        private static void MapKey(StringBuilder builder, Key key)
+        private static int StripKeyMask(Key key, KeyMask keyMask)
         {
-            if (Keymap.TryGetValue(key, out string value)) { builder.Append(value); }
-            else { throw new NotSupportedException($"Unsupported modifier key: \"{key}\""); }
+            return (int)key & (~(int)keyMask);
         }
-
-        private static readonly Dictionary<Key, string> Keymap = new Dictionary<Key, string>
-        {
-            { Key.None, string.Empty },
-            { Key.F1, "<F1>" },
-            { Key.F2, "<F2>" },
-            { Key.F3, "<F3>" },
-            { Key.F4, "<F4>" },
-            { Key.F5, "<F5>" },
-            { Key.F6, "<F6>" },
-            { Key.F7, "<F7>" },
-            { Key.F8, "<F8>" },
-            { Key.F9, "<F9>" },
-            { Key.F10, "<F10>" },
-            { Key.F11, "<F11>" },
-            { Key.F12, "<F12>" },
-            { Key.Number1, "1" },
-            { Key.Number2, "2" },
-            { Key.Number3, "3" },
-            { Key.Number4, "4" },
-            { Key.Number5, "5" },
-            { Key.Number6, "6" },
-            { Key.Number7, "7" },
-            { Key.Number8, "8" },
-            { Key.Number9, "9" },
-            { Key.Number0, "0" },
-            { Key.A, "A" },
-            { Key.B, "B" },
-            { Key.C, "C" },
-            { Key.D, "D" },
-            { Key.E, "E" },
-            { Key.F, "F" },
-            { Key.G, "G" },
-            { Key.H, "H" },
-            { Key.I, "I" },
-            { Key.J, "J" },
-            { Key.K, "K" },
-            { Key.L, "L" },
-            { Key.M, "M" },
-            { Key.N, "N" },
-            { Key.O, "O" },
-            { Key.P, "P" },
-            { Key.Q, "Q" },
-            { Key.R, "R" },
-            { Key.S, "S" },
-            { Key.T, "T" },
-            { Key.U, "U" },
-            { Key.V, "V" },
-            { Key.W, "W" },
-            { Key.X, "X" },
-            { Key.Y, "Y" },
-            { Key.Z, "Z" },
-            { Key.Insert, "<Insert>" },
-            { Key.Delete, "<Delete>" },
-            { Key.QuestionMark, "?" },
-        };
     }
 }
