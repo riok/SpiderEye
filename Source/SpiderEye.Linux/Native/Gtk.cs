@@ -13,11 +13,17 @@ namespace SpiderEye.Linux.Native
             [DllImport(GtkNativeDll, EntryPoint = "gtk_container_add", CallingConvention = CallingConvention.Cdecl)]
             public static extern void ContainerAdd(IntPtr container, IntPtr widget);
 
+            [DllImport(GtkNativeDll, EntryPoint = "gtk_container_get_children", CallingConvention = CallingConvention.Cdecl)]
+            public static extern IntPtr GetChildren(IntPtr container);
+
             [DllImport(GtkNativeDll, EntryPoint = "gtk_widget_show_all", CallingConvention = CallingConvention.Cdecl)]
             public static extern void ShowAll(IntPtr widget);
 
             [DllImport(GtkNativeDll, EntryPoint = "gtk_widget_show", CallingConvention = CallingConvention.Cdecl)]
             public static extern void Show(IntPtr widget);
+
+            [DllImport(GtkNativeDll, EntryPoint = "gtk_widget_hide", CallingConvention = CallingConvention.Cdecl)]
+            public static extern void Hide(IntPtr widget);
 
             [DllImport(GtkNativeDll, EntryPoint = "gtk_widget_destroy", CallingConvention = CallingConvention.Cdecl)]
             public static extern void Destroy(IntPtr widget);
@@ -27,6 +33,9 @@ namespace SpiderEye.Linux.Native
 
             [DllImport(GtkNativeDll, EntryPoint = "gtk_widget_get_sensitive", CallingConvention = CallingConvention.Cdecl)]
             public static extern bool GetEnabled(IntPtr widget);
+
+            [DllImport(GtkNativeDll, EntryPoint = "gtk_widget_add_accelerator", CallingConvention = CallingConvention.Cdecl)]
+            public static extern void AddAccelerator(IntPtr widget, IntPtr signal, IntPtr accelGroup, uint key, GdkModifierType mods, GtkAccelFlags flags);
         }
 
         public static class Window
@@ -102,6 +111,33 @@ namespace SpiderEye.Linux.Native
 
             [DllImport(GtkNativeDll, EntryPoint = "gtk_window_set_geometry_hints", CallingConvention = CallingConvention.Cdecl)]
             public static extern void SetGeometryHints(IntPtr window, IntPtr geometry_widget, ref GdkGeometry geometry, GdkWindowHints geom_mask);
+
+            [DllImport(GtkNativeDll, EntryPoint = "gtk_window_set_transient_for", CallingConvention = CallingConvention.Cdecl)]
+            public static extern void SetTransient(IntPtr window, IntPtr parentWindow);
+
+            [DllImport(GtkNativeDll, EntryPoint = "gtk_window_set_modal", CallingConvention = CallingConvention.Cdecl)]
+            public static extern void SetModal(IntPtr window, bool modal);
+
+            [DllImport(GtkNativeDll, EntryPoint = "gtk_window_set_destroy_with_parent", CallingConvention = CallingConvention.Cdecl)]
+            public static extern void DestoryWithParent(IntPtr window, bool modal);
+
+            [DllImport(GtkNativeDll, EntryPoint = "gtk_window_add_accel_group", CallingConvention = CallingConvention.Cdecl)]
+            public static extern void AddAccelGroup(IntPtr window, IntPtr accelGroup);
+        }
+
+        public static class Box
+        {
+            [DllImport(GtkNativeDll, EntryPoint = "gtk_box_new", CallingConvention = CallingConvention.Cdecl)]
+            public static extern IntPtr Create(GtkOrientationType orientation, int spacing);
+
+            [DllImport(GtkNativeDll, EntryPoint = "gtk_box_pack_start", CallingConvention = CallingConvention.Cdecl)]
+            public static extern void AddChild(IntPtr box, IntPtr child, bool expand, bool fill, int padding);
+        }
+
+        public static class MenuBar
+        {
+            [DllImport(GtkNativeDll, EntryPoint = "gtk_menu_bar_new", CallingConvention = CallingConvention.Cdecl)]
+            public static extern IntPtr Create();
         }
 
         public static class Menu
@@ -129,6 +165,15 @@ namespace SpiderEye.Linux.Native
 
             [DllImport(GtkNativeDll, EntryPoint = "gtk_menu_item_set_accel_path", CallingConvention = CallingConvention.Cdecl)]
             public static extern void SetAccelerator(IntPtr menu_item, IntPtr accel_path);
+
+            [DllImport(GtkNativeDll, EntryPoint = "gtk_menu_set_accel_group", CallingConvention = CallingConvention.Cdecl)]
+            public static extern void SetAccelGroup(IntPtr menu, IntPtr accelGroup);
+        }
+
+        public static class AccelGroup
+        {
+            [DllImport(GtkNativeDll, EntryPoint = "gtk_accel_group_new", CallingConvention = CallingConvention.Cdecl)]
+            public static extern IntPtr Create();
         }
 
         public static class Dialog

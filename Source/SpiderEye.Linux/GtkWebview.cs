@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -33,6 +34,9 @@ namespace SpiderEye.Linux
 
         public readonly IntPtr Handle;
 
+        private const string CustomScheme = "spidereye";
+        private const int UriCallbackFileNotFound = 4;
+        private const int UriCallbackUnspecifiedError = 24;
         private readonly WebviewBridge bridge;
         private readonly IntPtr manager;
         private readonly IntPtr settings;
@@ -45,6 +49,8 @@ namespace SpiderEye.Linux
         private readonly ContextMenuRequestDelegate contextMenuDelegate;
         private readonly WebviewDelegate closeDelegate;
         private readonly WebviewDelegate titleChangeDelegate;
+        private readonly WebKitUriSchemeRequestDelegate uriSchemeCallback;
+        private readonly ConcurrentDictionary<Guid, GAsyncReadyDelegate> scriptCallbacks;
 
         private bool loadEventHandled = false;
         private bool enableDevToolsField;
@@ -52,6 +58,7 @@ namespace SpiderEye.Linux
         public GtkWebview(WebviewBridge bridge)
         {
             this.bridge = bridge ?? throw new ArgumentNullException(nameof(bridge));
+            scriptCallbacks = new ConcurrentDictionary<Guid, GAsyncReadyDelegate>();
 
             // need to keep the delegates around or they will get garbage collected
             scriptDelegate = ScriptCallback;
@@ -60,6 +67,7 @@ namespace SpiderEye.Linux
             contextMenuDelegate = ContextMenuCallback;
             closeDelegate = CloseCallback;
             titleChangeDelegate = TitleChangeCallback;
+            uriSchemeCallback = UriSchemeCallback;
 
             manager = WebKit.Manager.Create();
             GLib.ConnectSignal(manager, "script-message-received::external", scriptDelegate, IntPtr.Zero);
@@ -67,6 +75,13 @@ namespace SpiderEye.Linux
             using (GLibString name = "external")
             {
                 WebKit.Manager.RegisterScriptMessageHandler(manager, name);
+            }
+
+            using (GLibString initScript = Resources.GetInitScript("Linux"))
+            {
+                var script = WebKit.Manager.CreateScript(initScript, WebKitInjectedFrames.AllFrames, WebKitInjectionTime.DocumentStart, IntPtr.Zero, IntPtr.Zero);
+                WebKit.Manager.AddScript(manager, script);
+                WebKit.Manager.UnrefScript(script);
             }
 
             Handle = WebKit.CreateWithUserContentManager(manager);
@@ -79,13 +94,12 @@ namespace SpiderEye.Linux
             GLib.ConnectSignal(Handle, "close", closeDelegate, IntPtr.Zero);
             GLib.ConnectSignal(Handle, "notify::title", titleChangeDelegate, IntPtr.Zero);
 
-            const string scheme = "spidereye";
-            customHost = new Uri(UriTools.GetRandomResourceUrl(scheme));
+            customHost = new Uri(UriTools.GetRandomResourceUrl(CustomScheme));
 
             IntPtr context = WebKit.Context.Get(Handle);
-            using (GLibString gscheme = scheme)
+            using (GLibString gscheme = CustomScheme)
             {
-                WebKit.Context.RegisterUriScheme(context, gscheme, UriSchemeCallback, IntPtr.Zero, IntPtr.Zero);
+                WebKit.Context.RegisterUriScheme(context, gscheme, uriSchemeCallback, IntPtr.Zero, IntPtr.Zero);
             }
         }
 
@@ -117,59 +131,76 @@ namespace SpiderEye.Linux
             }
         }
 
-        public Task<string> ExecuteScriptAsync(string script)
+        public async Task<string> ExecuteScriptAsync(string script)
         {
             var taskResult = new TaskCompletionSource<string>();
-
-            unsafe void Callback(IntPtr webview, IntPtr asyncResult, IntPtr userdata)
+            var id = Guid.NewGuid();
+            GAsyncReadyDelegate callback = (IntPtr webview, IntPtr asyncResult, IntPtr userdata) =>
             {
-                IntPtr jsResult = IntPtr.Zero;
                 try
                 {
-                    jsResult = WebKit.JavaScript.EndExecute(webview, asyncResult, out IntPtr errorPtr);
-                    if (jsResult != IntPtr.Zero)
-                    {
-                        IntPtr value = WebKit.JavaScript.GetValue(jsResult);
-                        if (WebKit.JavaScript.IsValueString(value))
-                        {
-                            IntPtr bytes = WebKit.JavaScript.GetStringBytes(value);
-                            IntPtr bytesPtr = GLib.GetBytesDataPointer(bytes, out UIntPtr length);
-
-                            string result = Encoding.UTF8.GetString((byte*)bytesPtr, (int)length);
-                            taskResult.TrySetResult(result);
-
-                            GLib.UnrefBytes(bytes);
-                        }
-                        else { taskResult.TrySetResult(null); }
-                    }
-                    else
-                    {
-                        try
-                        {
-                            var error = Marshal.PtrToStructure<GError>(errorPtr);
-                            string errorMessage = GLibString.FromPointer(error.Message);
-                            taskResult.TrySetException(new Exception($"Script execution failed with: \"{errorMessage}\""));
-                        }
-                        catch (Exception ex) { taskResult.TrySetException(ex); }
-                        finally { GLib.FreeError(errorPtr); }
-                    }
+                    taskResult.SetResult(ExecuteScriptCallback(webview, asyncResult, userdata));
                 }
-                catch (Exception ex) { taskResult.TrySetException(ex); }
-                finally
+                catch (Exception ex)
                 {
-                    if (jsResult != IntPtr.Zero)
-                    {
-                        WebKit.JavaScript.ReleaseJsResult(jsResult);
-                    }
+                    taskResult.SetException(ex);
                 }
-            }
+            };
+            scriptCallbacks.TryAdd(id, callback);
 
             using (GLibString gfunction = script)
             {
-                WebKit.JavaScript.BeginExecute(Handle, gfunction, IntPtr.Zero, Callback, IntPtr.Zero);
+                WebKit.JavaScript.BeginExecute(Handle, gfunction, IntPtr.Zero, callback, IntPtr.Zero);
             }
 
-            return taskResult.Task;
+            // found no other solution than the ConccurentDictionary one to keep the callbacks from getting garbage collected
+            // GC.KeepAlive(callback) works not all the time
+            var result = await taskResult.Task;
+            scriptCallbacks.TryRemove(id, out var _);
+            return result;
+        }
+
+        private string ExecuteScriptCallback(IntPtr webview, IntPtr asyncResult, IntPtr userdata)
+        {
+            IntPtr jsResult = IntPtr.Zero;
+            try
+            {
+                jsResult = WebKit.JavaScript.EndExecute(webview, asyncResult, out IntPtr errorPtr);
+                if (jsResult != IntPtr.Zero)
+                {
+                    IntPtr value = WebKit.JavaScript.GetValue(jsResult);
+                    if (WebKit.JavaScript.IsValueString(value))
+                    {
+                        IntPtr bytes = WebKit.JavaScript.GetStringBytes(value);
+                        IntPtr bytesPtr = GLib.GetBytesDataPointer(bytes, out UIntPtr length);
+
+                        unsafe
+                        {
+                            string result = Encoding.UTF8.GetString((byte*)bytesPtr, (int)length);
+                            GLib.UnrefBytes(bytes);
+                            return result;
+                        }
+                    }
+                    else { return null; }
+                }
+                else
+                {
+                    try
+                    {
+                        var error = Marshal.PtrToStructure<GError>(errorPtr);
+                        string errorMessage = GLibString.FromPointer(error.Message);
+                        throw new Exception($"Script execution failed with: \"{errorMessage}\"");
+                    }
+                    finally { GLib.FreeError(errorPtr); }
+                }
+            }
+            finally
+            {
+                if (jsResult != IntPtr.Zero)
+                {
+                    WebKit.JavaScript.ReleaseJsResult(jsResult);
+                }
+            }
         }
 
         public void Dispose()
@@ -205,8 +236,8 @@ namespace SpiderEye.Linux
             try
             {
                 var uri = new Uri(GLibString.FromPointer(WebKit.UriScheme.GetRequestUri(request)));
-                var host = new Uri(uri.GetComponents(UriComponents.SchemeAndServer, UriFormat.Unescaped));
-                if (host == customHost)
+                var scheme = uri.GetComponents(UriComponents.Scheme, UriFormat.Unescaped);
+                if (scheme == CustomScheme)
                 {
                     using (var contentStream = await Application.ContentProvider.GetStreamAsync(uri))
                     {
@@ -260,9 +291,9 @@ namespace SpiderEye.Linux
                     }
                 }
 
-                FinishUriSchemeCallbackWithError(request);
+                FinishUriSchemeCallbackWithError(request, UriCallbackFileNotFound);
             }
-            catch { FinishUriSchemeCallbackWithError(request); }
+            catch { FinishUriSchemeCallbackWithError(request, UriCallbackUnspecifiedError); }
         }
 
         private bool LoadFailedCallback(IntPtr webview, WebKitLoadEvent type, IntPtr failingUrl, IntPtr error, IntPtr userdata)
@@ -270,11 +301,10 @@ namespace SpiderEye.Linux
             // this event is called when there is an error, immediately afterwards the LoadCallback is called with state Finished.
             // to indicate that there was an error and the PageLoaded event has been invoked, the loadEventHandled variable is set to true.
             loadEventHandled = true;
-
             return false;
         }
 
-        private async void LoadCallback(IntPtr webview, WebKitLoadEvent type, IntPtr userdata)
+        private void LoadCallback(IntPtr webview, WebKitLoadEvent type, IntPtr userdata)
         {
             if (type == WebKitLoadEvent.Started)
             {
@@ -295,9 +325,6 @@ namespace SpiderEye.Linux
             }
             else if (type == WebKitLoadEvent.Finished && !loadEventHandled)
             {
-                string initScript = Resources.GetInitScript("Linux");
-                await ExecuteScriptAsync(initScript);
-
                 if (EnableDevTools) { ShowDevTools(); }
 
                 loadEventHandled = true;
@@ -329,10 +356,10 @@ namespace SpiderEye.Linux
             }
         }
 
-        private void FinishUriSchemeCallbackWithError(IntPtr request)
+        private void FinishUriSchemeCallbackWithError(IntPtr request, int errorCode)
         {
             uint domain = GLib.GetFileErrorQuark();
-            var error = new GError(domain, 4, IntPtr.Zero); // error code 4 = not found
+            var error = new GError(domain, errorCode, IntPtr.Zero);
             WebKit.UriScheme.FinishSchemeRequestWithError(request, ref error);
         }
     }

@@ -18,7 +18,7 @@ namespace SpiderEye.Linux.Native
             public static extern bool RegisterScriptMessageHandler(IntPtr manager, IntPtr name);
 
             [DllImport(WebkitNativeDll, EntryPoint = "webkit_user_script_new", CallingConvention = CallingConvention.Cdecl)]
-            public static extern IntPtr CreateScript(IntPtr manager, IntPtr source, WebKitInjectedFrames injectedFrames, WebKitInjectionTime injectedTime, IntPtr whitelist, IntPtr blacklist);
+            public static extern IntPtr CreateScript(IntPtr source, WebKitInjectedFrames injectedFrames, WebKitInjectionTime injectedTime, IntPtr whitelist, IntPtr blacklist);
 
             [DllImport(WebkitNativeDll, EntryPoint = "webkit_user_content_manager_add_script", CallingConvention = CallingConvention.Cdecl)]
             public static extern void AddScript(IntPtr manager, IntPtr script);

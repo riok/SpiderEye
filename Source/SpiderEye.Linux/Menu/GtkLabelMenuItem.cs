@@ -8,6 +8,9 @@ namespace SpiderEye.Linux
     internal class GtkLabelMenuItem : GtkMenuItem, ILabelMenuItem
     {
         public event EventHandler Click;
+        private bool hasShortcut;
+        private GdkModifierType shortcutModifierKey;
+        private uint shortcutKey;
 
         public string Label
         {
@@ -39,17 +42,28 @@ namespace SpiderEye.Linux
 
         public void SetShortcut(ModifierKey modifier, Key key)
         {
-            string shortcut = KeyMapper.GetShortcut(modifier, key);
-            using (GLibString gshortcut = shortcut)
-            {
-                Gtk.Menu.SetAccelerator(Handle, gshortcut);
-            }
+            hasShortcut = true;
+            shortcutModifierKey = KeyMapper.MapModifier(modifier);
+            shortcutKey = KeyMapper.MapKey(key);
         }
 
         public void SetSystemShorcut(SystemShortcut shortcut)
         {
             (var modifier, var key) = KeyMapper.ResolveSystemShortcut(shortcut);
             SetShortcut(modifier, key);
+        }
+
+        public override void SetAccelGroup(IntPtr accelGroupHandle)
+        {
+            if (hasShortcut)
+            {
+                using (GLibString signal = "activate")
+                {
+                    Gtk.Widget.AddAccelerator(Handle, signal, accelGroupHandle, shortcutKey, shortcutModifierKey, GtkAccelFlags.Visible);
+                }
+            }
+
+            subMenu.SetAccelGroup(accelGroupHandle);
         }
 
         private static IntPtr CreateHandle(string label)

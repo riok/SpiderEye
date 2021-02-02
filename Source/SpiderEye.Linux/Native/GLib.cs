@@ -37,6 +37,12 @@ namespace SpiderEye.Linux.Native
         [DllImport(GLibNativeDll, EntryPoint = "g_list_free", CallingConvention = CallingConvention.Cdecl)]
         public static extern void FreeList(IntPtr list);
 
+        [DllImport(GLibNativeDll, EntryPoint = "g_list_length", CallingConvention = CallingConvention.Cdecl)]
+        public static extern uint GetListLength(IntPtr list);
+
+        [DllImport(GLibNativeDll, EntryPoint = "g_list_nth_data", CallingConvention = CallingConvention.Cdecl)]
+        public static extern IntPtr GetListNthData(IntPtr list, uint index);
+
         [DllImport(GObjectNativeDll, EntryPoint = "g_file_error_quark", CallingConvention = CallingConvention.Cdecl)]
         public static extern uint GetFileErrorQuark();
 

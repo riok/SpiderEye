@@ -2,6 +2,7 @@ using System;
 using SpiderEye.Bridge;
 using SpiderEye.Linux.Interop;
 using SpiderEye.Linux.Native;
+using SpiderEye.Tools;
 
 namespace SpiderEye.Linux
 {
@@ -32,7 +33,14 @@ namespace SpiderEye.Linux
             }
             set
             {
-                Gtk.Window.Resize(Handle, (int)value.Width, (int)value.Height);
+                if (!shown)
+                {
+                    Gtk.Window.SetDefaultSize(Handle, (int)value.Width, (int)value.Height);
+                }
+                else
+                {
+                    Gtk.Window.Resize(Handle, (int)value.Width, (int)value.Height);
+                }
             }
         }
 
@@ -101,7 +109,15 @@ namespace SpiderEye.Linux
             set { webview.EnableDevTools = value; }
         }
 
-        public Menu Menu { get; set; } // TODO implement this
+        public Menu Menu
+        {
+            get { return menu; }
+            set
+            {
+                menu = value;
+                RefreshMenu();
+            }
+        }
 
         public IWebview Webview
         {
@@ -119,28 +135,58 @@ namespace SpiderEye.Linux
         private readonly DeleteCallbackDelegate deleteDelegate;
         private readonly WidgetCallbackDelegate destroyDelegate;
 
+        private readonly IntPtr menuBarHandle;
+        private readonly IntPtr accelGroup;
+        private bool shown;
+        private bool disposed;
         private Size minSizeField;
         private Size maxSizeField;
         private string backgroundColorField;
         private AppIcon iconField;
+        private Menu menu;
 
         public GtkWindow(WebviewBridge bridge)
         {
             this.bridge = bridge ?? throw new ArgumentNullException(nameof(bridge));
 
-            webview = new GtkWebview(bridge);
+            try
+            {
+                webview = new GtkWebview(bridge);
+            }
+            catch (DllNotFoundException)
+            {
+                var dialog = new GtkMessageBox
+                {
+                    Title = "Missing dependency",
+                    Message = "The dependency 'libwebkit2gtk-4.0' is missing, Please install it to use Kreya.",
+                    Buttons = MessageBoxButtons.Ok,
+                };
+                dialog.Show();
+                Environment.Exit(-1);
+            }
+
             Handle = Gtk.Window.Create(GtkWindowType.Toplevel);
 
-            IntPtr scroller = Gtk.Window.CreateScrolled(IntPtr.Zero, IntPtr.Zero);
-            Gtk.Widget.ContainerAdd(Handle, scroller);
-            Gtk.Widget.ContainerAdd(scroller, webview.Handle);
+            IntPtr contentBox = Gtk.Box.Create(GtkOrientationType.Vertical, 0);
+            Gtk.Widget.ContainerAdd(Handle, contentBox);
+            Gtk.Widget.Show(contentBox);
+
+            // Do not show the menu bar, since it could be empty
+            menuBarHandle = Gtk.MenuBar.Create();
+            Gtk.Box.AddChild(contentBox, menuBarHandle, false, false, 0);
+
+            Gtk.Box.AddChild(contentBox, webview.Handle, true, true, 0);
+            Gtk.Widget.Show(webview.Handle);
+
+            accelGroup = Gtk.AccelGroup.Create();
+            Gtk.Window.AddAccelGroup(Handle, accelGroup);
 
             // need to keep the delegates around or they will get garbage collected
             showDelegate = ShowCallback;
             deleteDelegate = DeleteCallback;
             destroyDelegate = DestroyCallback;
 
-            GLib.ConnectSignal(Handle, "show", destroyDelegate, IntPtr.Zero);
+            GLib.ConnectSignal(Handle, "show", showDelegate, IntPtr.Zero);
             GLib.ConnectSignal(Handle, "delete-event", deleteDelegate, IntPtr.Zero);
             GLib.ConnectSignal(Handle, "destroy", destroyDelegate, IntPtr.Zero);
 
@@ -150,14 +196,21 @@ namespace SpiderEye.Linux
 
         public void Show()
         {
-            Gtk.Widget.ShowAll(Handle);
             Gtk.Window.Present(Handle);
+            shown = true;
         }
 
         public void ShowModal(IWindow modalWindow)
         {
-            // TODO implement this
-            throw new NotImplementedException();
+            if (modalWindow is not GtkWindow modalWinToShow)
+            {
+                return;
+            }
+
+            Gtk.Window.SetTransient(modalWinToShow.Handle, Handle);
+            Gtk.Window.DestoryWithParent(modalWinToShow.Handle, true);
+            Gtk.Window.SetModal(modalWinToShow.Handle, true);
+            modalWinToShow.Show();
         }
 
         public void Close()
@@ -189,8 +242,12 @@ namespace SpiderEye.Linux
 
         public void Dispose()
         {
-            webview.Dispose();
-            Gtk.Widget.Destroy(Handle);
+            if (!disposed)
+            {
+                disposed = true;
+                webview.Dispose();
+                Gtk.Widget.Destroy(Handle);
+            }
         }
 
         private void SetWindowRestrictions(Size min, Size max)
@@ -296,6 +353,49 @@ namespace SpiderEye.Linux
                 Gtk.StyleContext.AddProvider(context, provider, GtkStyleProviderPriority.Application);
             }
             finally { if (provider != IntPtr.Zero) { GLib.UnrefObject(provider); } }
+        }
+
+        private void RefreshMenu()
+        {
+            ClearMenu();
+            PopulateMenu();
+
+            if (menu.MenuItems.Count > 0)
+            {
+                Gtk.Widget.ShowAll(menuBarHandle);
+            }
+            else
+            {
+                Gtk.Widget.Hide(menuBarHandle);
+            }
+        }
+
+        private void PopulateMenu()
+        {
+            if (menu == null)
+            {
+                return;
+            }
+
+            var nativeMenu = NativeCast.To<GtkMenu>(menu.NativeMenu);
+            nativeMenu.SetAccelGroup(accelGroup);
+
+            foreach (var menuItem in nativeMenu.GetItems())
+            {
+                Gtk.Widget.ContainerAdd(menuBarHandle, menuItem.Handle);
+            }
+        }
+
+        private void ClearMenu()
+        {
+            IntPtr existingMenuList = Gtk.Widget.GetChildren(menuBarHandle);
+            for (uint i = 0; i < GLib.GetListLength(existingMenuList); i++)
+            {
+                var existingMenu = GLib.GetListNthData(existingMenuList, i);
+                Gtk.Widget.Destroy(existingMenu);
+            }
+
+            GLib.FreeList(existingMenuList);
         }
     }
 }

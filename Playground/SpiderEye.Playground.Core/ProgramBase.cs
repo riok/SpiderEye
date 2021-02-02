@@ -19,7 +19,6 @@ namespace SpiderEye.Playground.Core
             using var serviceProvider = serviceCollection.BuildServiceProvider();
             _serviceProvider = serviceProvider;
 
-            using (var statusIcon = new StatusIcon())
             using (var window = new Window(serviceProvider))
             {
                 _mainWindow = window;
@@ -68,34 +67,12 @@ namespace SpiderEye.Playground.Core
 
                 window.Menu = windowMenu;
 
-                statusIcon.Icon = icon;
-                statusIcon.Title = window.Title;
-
                 if (window.MacOsOptions != null)
                 {
                     window.MacOsOptions.Appearance = MacOsAppearance.DarkAqua;
                 }
 
                 SetDevSettings(window);
-
-                var menu = new Menu();
-                var showItem = menu.MenuItems.AddLabelItem("Hello World");
-                showItem.SetShortcut(ModifierKey.Primary, Key.O);
-                showItem.Click += ShowItem_Click;
-
-                var eventItem = menu.MenuItems.AddLabelItem("Send Event to Webview");
-                eventItem.SetShortcut(ModifierKey.Primary, Key.E);
-                eventItem.Click += async (s, e) => await window.Bridge.InvokeAsync("dateUpdated", DateTime.Now);
-
-                var subMenuItem = menu.MenuItems.AddLabelItem("Open me!");
-                subMenuItem.MenuItems.AddLabelItem("Boo!");
-
-                menu.MenuItems.AddSeparatorItem();
-
-                var exitItem = menu.MenuItems.AddLabelItem("Exit");
-                exitItem.Click += (s, e) => Application.Exit();
-
-                statusIcon.Menu = menu;
 
                 // the port number is defined in the angular.json file (under "architect"->"serve"->"options"->"port")
                 // note that you have to run the angular dev server first (npm run watch)

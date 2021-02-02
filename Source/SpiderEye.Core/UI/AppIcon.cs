@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -67,7 +68,7 @@ namespace SpiderEye
 
             if (!Path.IsPathRooted(directory))
             {
-                string exeDir = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
+                string exeDir = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
                 if (directory == string.Empty || directory == ".") { directory = exeDir; }
                 else { directory = Path.Combine(exeDir, directory); }
             }
