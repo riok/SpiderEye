@@ -158,7 +158,7 @@ namespace SpiderEye.Linux
                 var dialog = new GtkMessageBox
                 {
                     Title = "Missing dependency",
-                    Message = "The dependency 'libwebkit2gtk-4.0' is missing, Please install it to use Kreya.",
+                    Message = "The dependency 'libwebkit2gtk-4.0' is missing. Make sure it is installed correctly.",
                     Buttons = MessageBoxButtons.Ok,
                 };
                 dialog.Show();
