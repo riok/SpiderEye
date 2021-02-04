@@ -1,4 +1,6 @@
-﻿namespace SpiderEye.Linux
+﻿using System;
+
+namespace SpiderEye.Linux
 {
     /// <summary>
     /// Provides Linux specific application methods.
@@ -12,7 +14,16 @@
         /// </summary>
         public static void Init()
         {
-            app = new GtkApplication();
+            try
+            {
+                app = new GtkApplication();
+            }
+            catch (DllNotFoundException)
+            {
+                Console.WriteLine("Dependencies are missing. Please make sure that 'libgtk-3' and 'libwebkit2gtk-4.0' are installed.");
+                Environment.Exit(-1);
+            }
+
             Application.Register(app, OperatingSystem.Linux);
         }
     }
