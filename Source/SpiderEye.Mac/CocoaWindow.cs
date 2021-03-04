@@ -209,6 +209,7 @@ namespace SpiderEye.Mac
         public void ShowModal(IWindow modalWindow)
         {
             MacApplication.ShowModal((CocoaWindow)modalWindow);
+            MacApplication.SynchronizationContext.Post(s => Shown?.Invoke(modalWindow, EventArgs.Empty), null);
         }
 
         public void Close()
