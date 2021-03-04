@@ -195,7 +195,7 @@ namespace SpiderEye
         }
 
         /// <summary>
-        /// Shows a modal window. This method blocks until the modal is closed.
+        /// Shows a modal window. Blocks on linux and windows, not on macos.
         /// </summary>
         /// <param name="modal">The modal window.</param>
         public void ShowModal(Window modal)
