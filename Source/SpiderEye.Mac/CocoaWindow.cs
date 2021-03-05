@@ -8,6 +8,9 @@ namespace SpiderEye.Mac
 {
     internal class CocoaWindow : IWindow, IMacOsWindowOptions
     {
+        private static CocoaWindow modalWindow;
+        private bool canResizeBeforeModal;
+
         public event CancelableEventHandler Closing;
         public event EventHandler Closed;
         public event EventHandler Shown;
@@ -65,8 +68,27 @@ namespace SpiderEye.Mac
             set
             {
                 canResizeField = value;
-                var style = GetStyleMask(value);
-                ObjC.Call(Handle, "setStyleMask:", style);
+                UpdateStyleMask();
+            }
+        }
+
+        public bool CanClose
+        {
+            get { return canCloseField; }
+            set
+            {
+                canCloseField = value;
+                UpdateStyleMask();
+            }
+        }
+
+        public bool CanMinimize
+        {
+            get { return canMinimizeField; }
+            set
+            {
+                canMinimizeField = value;
+                UpdateStyleMask();
             }
         }
 
@@ -160,7 +182,9 @@ namespace SpiderEye.Mac
         private readonly NativeClassInstance windowDelegate;
         private readonly CocoaWebview webview;
 
-        private bool canResizeField;
+        private bool canResizeField = true;
+        private bool canCloseField = true;
+        private bool canMinimizeField = true;
         private string backgroundColorField;
         private bool titleBarTransparentField;
         private MacOsAppearance? macOsAppearanceField;
@@ -180,7 +204,7 @@ namespace SpiderEye.Mac
 
             Handle = AppKit.Call("NSWindow", "alloc");
 
-            var style = GetStyleMask(config.CanResize);
+            var style = GetStyleMask();
             ObjC.SendMessage(
                 Handle,
                 ObjC.RegisterName("initWithContentRect:styleMask:backing:defer:"),
@@ -201,15 +225,19 @@ namespace SpiderEye.Mac
         public void Show()
         {
             ObjC.Call(Handle, "center");
-            ObjC.Call(Handle, "makeKeyAndOrderFront:", IntPtr.Zero);
-
+            Focus();
             MacApplication.SynchronizationContext.Post(s => Shown?.Invoke(this, EventArgs.Empty), null);
         }
 
-        public void ShowModal(IWindow modalWindow)
+        public void ShowModal(IWindow modalWin)
         {
-            MacApplication.ShowModal((CocoaWindow)modalWindow);
-            MacApplication.SynchronizationContext.Post(s => Shown?.Invoke(modalWindow, EventArgs.Empty), null);
+            canResizeBeforeModal = CanResize;
+            CanResize = false;
+            CanMinimize = false;
+            CanClose = false;
+            modalWindow = (CocoaWindow)modalWin;
+            modalWin.Closed += ExitModal;
+            modalWin.Show();
         }
 
         public void Close()
@@ -247,6 +275,17 @@ namespace SpiderEye.Mac
             windowDelegate.Dispose();
         }
 
+        private static bool CheckCanBecomeKey(CocoaWindow window)
+        {
+            if (modalWindow == null || modalWindow == window)
+            {
+                return true;
+            }
+
+            modalWindow.Focus();
+            return false;
+        }
+
         private static NativeClassDefinition CreateWindowDelegate()
         {
             var definition = NativeClassDefinition.FromObject(
@@ -271,7 +310,10 @@ namespace SpiderEye.Mac
                 (self, op, notification) =>
                 {
                     var instance = definition.GetParent<CocoaWindow>(self);
-                    instance?.SetMenu();
+                    if (instance != null && CheckCanBecomeKey(instance))
+                    {
+                        instance.SetMenu();
+                    }
                 });
 
             definition.AddMethod<NotificationDelegate>(
@@ -292,6 +334,25 @@ namespace SpiderEye.Mac
             return definition;
         }
 
+        private void ExitModal(object sender, EventArgs eventArgs)
+        {
+            if (!(sender is CocoaWindow window))
+            {
+                return;
+            }
+
+            CanResize = canResizeBeforeModal;
+            CanMinimize = true;
+            CanClose = true;
+            window.Closed -= ExitModal;
+            modalWindow = null;
+        }
+
+        private void Focus()
+        {
+            ObjC.Call(Handle, "makeKeyAndOrderFront:", IntPtr.Zero);
+        }
+
         private void SetMenu()
         {
             if (IsKeyWindow)
@@ -300,12 +361,31 @@ namespace SpiderEye.Mac
             }
         }
 
-        private UIntPtr GetStyleMask(bool canResize)
+        private UIntPtr GetStyleMask()
         {
-            var style = NSWindowStyleMask.Titled | NSWindowStyleMask.Closable | NSWindowStyleMask.Miniaturizable;
-            if (canResize) { style |= NSWindowStyleMask.Resizable; }
+            var style = NSWindowStyleMask.Titled;
+            if (canResizeField)
+            {
+                style |= NSWindowStyleMask.Resizable;
+            }
+
+            if (canCloseField)
+            {
+                style |= NSWindowStyleMask.Closable;
+            }
+
+            if (canMinimizeField)
+            {
+                style |= NSWindowStyleMask.Miniaturizable;
+            }
 
             return new UIntPtr((uint)style);
+        }
+
+        private void UpdateStyleMask()
+        {
+            var style = GetStyleMask();
+            ObjC.Call(Handle, "setStyleMask:", style);
         }
 
         private void Webview_TitleChanged(object sender, string title)
