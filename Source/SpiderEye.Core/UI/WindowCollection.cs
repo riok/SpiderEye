@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace SpiderEye
 {
@@ -21,6 +22,17 @@ namespace SpiderEye
         public int Count
         {
             get { return windows.Count; }
+        }
+
+        /// <summary>
+        /// Returns the main window (the first opened window which is still open).
+        /// </summary>
+        public Window MainWindow
+        {
+            get
+            {
+                return windows.FirstOrDefault();
+            }
         }
 
         private readonly List<Window> windows = new List<Window>();

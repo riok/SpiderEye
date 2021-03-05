@@ -2,10 +2,10 @@ using System;
 using System.Runtime.ExceptionServices;
 using System.Threading;
 using Newtonsoft.Json;
+using SpiderEye.Bridge;
 #if !NET462
 using System.Runtime.InteropServices;
 #endif
-using SpiderEye.Bridge;
 
 namespace SpiderEye
 {
