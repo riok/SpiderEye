@@ -11,7 +11,7 @@ namespace SpiderEye.Playground.Core
 
         protected static void Run()
         {
-            var icon = AppIcon.FromFile("icon", ".");
+            // var icon = AppIcon.FromFile("icon", ".");
 
             var serviceCollection = new ServiceCollection();
             serviceCollection.AddScoped<UiBridge>();
@@ -30,7 +30,7 @@ namespace SpiderEye.Playground.Core
                 window.Size = new Size(800, 600);
                 window.MinSize = new Size(300, 200);
                 window.MaxSize = new Size(1200, 900);
-                window.Icon = icon;
+                // window.Icon = icon;
                 window.Navigating += (sender, uri) => Console.WriteLine("uri changed: " + uri);
 
                 var windowMenu = new Menu();
@@ -78,7 +78,8 @@ namespace SpiderEye.Playground.Core
                 // note that you have to run the angular dev server first (npm run watch)
                 Application.UriWatcher = new AngularDevUriWatcher("http://localhost:65400");
                 Application.ContentProvider = new EmbeddedContentProvider("Angular/dist");
-                Application.Run(window, "/index.html");
+                // Application.Run(window, "/index.html");
+                Application.Run(window, "https://nd875.csb.app/");
             }
         }
 
