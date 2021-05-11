@@ -31,6 +31,7 @@ namespace SpiderEye.Windows
         {
             App.EnableVisualStyles();
             App.SetCompatibleTextRenderingDefault(false);
+            App.SetHighDpiMode(HighDpiMode.PerMonitorV2);
 
             Factory = new WinFormsUiFactory();
             SynchronizationContext = new WindowsFormsSynchronizationContext();
