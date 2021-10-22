@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Windows.Forms;
 using SpiderEye.Tools;
 
@@ -28,6 +29,16 @@ namespace SpiderEye.Windows.Interop
                 default:
                     throw new NotSupportedException($"Unsupported system shortcut: \"{systemShortcut}\"");
             }
+        }
+
+        public static string GetShortcutText(Keys keys)
+        {
+            var text = TypeDescriptor.GetConverter(typeof(Keys)).ConvertToString(keys);
+
+            // Some keys aren't correctly translated, do it manually here
+            text = text.Replace("OemQuestion", "?");
+            text = text.Replace("Oemcomma", ",");
+            return text;
         }
 
         private static Keys MapModifier(ModifierKey modifier)
@@ -126,6 +137,7 @@ namespace SpiderEye.Windows.Interop
             { Key.Insert, Keys.Insert },
             { Key.Delete, Keys.Delete },
             { Key.QuestionMark, Keys.OemQuestion },
+            { Key.Comma, Keys.Oemcomma },
         };
     }
 }

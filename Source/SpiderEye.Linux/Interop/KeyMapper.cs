@@ -44,7 +44,15 @@ namespace SpiderEye.UI.Platforms.Linux.Interop
                 return a + (uint)number - 1;
             }
 
-            return 0;
+            // special keys can be looked up here: https://gtk-rs.org/gtk4-rs/stable/0.1/docs/gdk4_sys/constant.GDK_KEY_Insert.html
+            return key switch
+            {
+                Key.Comma => 44,
+                Key.QuestionMark => 63,
+                Key.Insert => 65379,
+                Key.Delete => 65535,
+                _ => 0,
+            };
         }
 
         public static GdkModifierType MapModifier(ModifierKey modifier)

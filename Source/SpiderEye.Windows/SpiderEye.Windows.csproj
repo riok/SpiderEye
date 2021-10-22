@@ -2,14 +2,15 @@
   <Import Project="..\Shared\SpiderEye.Shared.Platform.proj" />
 
   <PropertyGroup>
-    <TargetFrameworks>net5.0-windows</TargetFrameworks>
+    <!-- with .NET 5, nuget packages need to target a platform version-->
+    <TargetFrameworks>net5.0-windows7.0</TargetFrameworks>
     <UseWindowsForms>true</UseWindowsForms>
     <AssemblyName>SpiderEye.Native</AssemblyName>
     <RootNamespace>SpiderEye.Windows</RootNamespace>
   </PropertyGroup>
   
   <ItemGroup>
-    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.721-prerelease" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.992.28" />
     <PackageReference Include="Microsoft.Windows.Compatibility" Version="5.0.0" />
   </ItemGroup>
 </Project>

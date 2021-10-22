@@ -24,7 +24,7 @@ jobs:
         displayName: 'Use .NET Core sdk'
         inputs:
           packageType: sdk
-          version: 5.0.100
+          version: 5.0.402
           installationPath: $(Agent.ToolsDirectory)/dotnet
       - task: CmdLine@2
         displayName: 'Install linux dependencies'
@@ -70,12 +70,14 @@ jobs:
           ArtifactName: 'artifacts-combined'
           publishLocation: 'Container'
   - job: 'BuildCore'
+    pool:
+      vmImage: 'ubuntu-18.04'
     steps:
       - task: UseDotNet@2
         displayName: 'Use .NET Core sdk'
         inputs:
           packageType: sdk
-          version: 5.0.100
+          version: 5.0.402
           installationPath: $(Agent.ToolsDirectory)/dotnet
       - task: CmdLine@2
         displayName: 'dotnet pack SpiderEye.Core'
