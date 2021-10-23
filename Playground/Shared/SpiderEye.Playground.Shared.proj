@@ -1,6 +1,6 @@
 ﻿<Project>
   <PropertyGroup>
-    <LangVersion>9</LangVersion>
+    <LangVersion>10</LangVersion>
     <OutputType>WinExe</OutputType>
     <AssemblyName>SpiderEye.Playground</AssemblyName>
     <RootNamespace>SpiderEye.Playground</RootNamespace>
