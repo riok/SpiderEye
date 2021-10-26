@@ -7,7 +7,7 @@
         <IsMacOs Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::OSX)))' == 'true'">true</IsMacOs>
         <IsLinux Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))' == 'true'">true</IsLinux>
 
-        <TargetFramework Condition="'$(IsWindows)' == 'true'">net5.0-windows</TargetFramework>
+        <TargetFramework Condition="'$(IsWindows)' == 'true'">net5.0-windows7.0</TargetFramework>
         <TargetFramework Condition="'$(IsLinux)' == 'true'">net5.0</TargetFramework>
         <TargetFramework Condition="'$(IsMacOs)' == 'true'">net5.0</TargetFramework>
       

@@ -40,6 +40,7 @@ namespace SpiderEye.Windows
         {
             var shortcut = KeyMapper.GetShortcut(modifier, key);
             menuItem.ShortcutKeys = shortcut;
+            menuItem.ShortcutKeyDisplayString = KeyMapper.GetShortcutText(shortcut);
         }
 
         public void SetSystemShorcut(SystemShortcut shortcut)
