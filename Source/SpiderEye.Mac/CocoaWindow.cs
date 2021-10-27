@@ -67,6 +67,11 @@ namespace SpiderEye.Mac
             get { return canResizeField; }
             set
             {
+                if (canResizeField == value)
+                {
+                    return;
+                }
+
                 canResizeField = value;
                 UpdateStyleMask();
             }
@@ -77,6 +82,11 @@ namespace SpiderEye.Mac
             get { return canCloseField; }
             set
             {
+                if (canCloseField == value)
+                {
+                    return;
+                }
+
                 canCloseField = value;
                 UpdateStyleMask();
             }
@@ -87,6 +97,11 @@ namespace SpiderEye.Mac
             get { return canMinimizeField; }
             set
             {
+                if (canMinimizeField == value)
+                {
+                    return;
+                }
+
                 canMinimizeField = value;
                 UpdateStyleMask();
             }
@@ -97,6 +112,11 @@ namespace SpiderEye.Mac
             get { return backgroundColorField; }
             set
             {
+                if (backgroundColorField == value)
+                {
+                    return;
+                }
+
                 backgroundColorField = value;
                 IntPtr bgColor = NSColor.FromHex(value);
                 ObjC.Call(Handle, "setBackgroundColor:", bgColor);
@@ -145,6 +165,11 @@ namespace SpiderEye.Mac
             get => macOsAppearanceField;
             set
             {
+                if (macOsAppearanceField == value)
+                {
+                    return;
+                }
+
                 macOsAppearanceField = value;
                 var appearance = value switch
                 {
@@ -155,6 +180,7 @@ namespace SpiderEye.Mac
                     _ => throw new InvalidOperationException("unsupported appearance"),
                 };
                 ObjC.SetProperty(Handle, "appearance", AppKit.Call("NSAppearance", "appearanceNamed:", appearance));
+                SetNeedsDisplay();
             }
         }
 
@@ -163,8 +189,14 @@ namespace SpiderEye.Mac
             get => titleBarTransparentField;
             set
             {
+                if (titleBarTransparentField == value)
+                {
+                    return;
+                }
+
                 titleBarTransparentField = value;
                 ObjC.SetProperty(Handle, "titlebarAppearsTransparent", value);
+                SetNeedsDisplay();
             }
         }
 
@@ -386,6 +418,7 @@ namespace SpiderEye.Mac
         {
             var style = GetStyleMask();
             ObjC.Call(Handle, "setStyleMask:", style);
+            SetNeedsDisplay();
         }
 
         private void Webview_TitleChanged(object sender, string title)
@@ -394,6 +427,11 @@ namespace SpiderEye.Mac
             {
                 Application.Invoke(() => Title = title ?? string.Empty);
             }
+        }
+
+        private void SetNeedsDisplay()
+        {
+            ObjC.SetProperty(Handle, "needsDisplay", true);
         }
     }
 }
