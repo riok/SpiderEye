@@ -61,7 +61,9 @@ namespace SpiderEye.Windows
 
         public void UpdateBackgroundColor(byte r, byte g, byte b)
         {
-            webview.BackColor = Color.FromArgb(r, g, b);
+            var color = Color.FromArgb(r, g, b);
+            webview.BackColor = color;
+            webview.DefaultBackgroundColor = color;
         }
 
         public void LoadUri(Uri uri)
