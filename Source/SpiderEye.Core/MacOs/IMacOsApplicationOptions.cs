@@ -1,9 +1,9 @@
 namespace SpiderEye
 {
     /// <summary>
-    /// Accessor for mac os related window options.
+    /// Accessor for mac os related application options.
     /// </summary>
-    public interface IMacOsWindowOptions
+    public interface IMacOsApplicationOptions
     {
         /// <summary>
         /// Gets or sets the mac os appearance.
