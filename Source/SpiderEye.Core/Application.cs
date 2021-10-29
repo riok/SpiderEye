@@ -26,6 +26,11 @@ namespace SpiderEye
         public static WindowCollection OpenWindows { get; }
 
         /// <summary>
+        /// Gets mac os related window options.
+        /// </summary>
+        public static IMacOsApplicationOptions MacOsOptions => app.NativeOptions as IMacOsApplicationOptions;
+
+        /// <summary>
         /// Gets or sets the content provider for loading webview files.
         /// </summary>
         public static IContentProvider ContentProvider

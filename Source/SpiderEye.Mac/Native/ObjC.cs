@@ -151,5 +151,10 @@ namespace SpiderEye.Mac.Native
         {
             return Call(id, "setValue:forKey:", value, NSString.Create(propertyName));
         }
+
+        public static IntPtr GetProperty(IntPtr id, string propertyName)
+        {
+            return Call(id, "valueForKey:", NSString.Create(propertyName));
+        }
     }
 }

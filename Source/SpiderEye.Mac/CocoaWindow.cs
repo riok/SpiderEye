@@ -171,16 +171,18 @@ namespace SpiderEye.Mac
                 }
 
                 macOsAppearanceField = value;
-                var appearance = value switch
-                {
-                    MacOsAppearance.Aqua => NSAppearanceName.NSAppearanceNameAqua,
-                    MacOsAppearance.DarkAqua => NSAppearanceName.NSAppearanceNameDarkAqua,
-                    MacOsAppearance.VibrantLight => NSAppearanceName.NSAppearanceNameVibrantLight,
-                    MacOsAppearance.VibrantDark => NSAppearanceName.NSAppearanceNameVibrantDark,
-                    _ => throw new InvalidOperationException("unsupported appearance"),
-                };
-                ObjC.SetProperty(Handle, "appearance", AppKit.Call("NSAppearance", "appearanceNamed:", appearance));
-                SetNeedsDisplay();
+                var appearance = NSAppearanceName.GetNSAppearance(value);
+                ObjC.SetProperty(Handle, "appearance", appearance);
+                Display();
+            }
+        }
+
+        public MacOsAppearance EffectiveAppearance
+        {
+            get
+            {
+                var appearance = ObjC.GetProperty(Handle, "effectiveAppearance");
+                return NSAppearanceName.GetMacOsAppearance(appearance);
             }
         }
 
@@ -196,7 +198,7 @@ namespace SpiderEye.Mac
 
                 titleBarTransparentField = value;
                 ObjC.SetProperty(Handle, "titlebarAppearsTransparent", value);
-                SetNeedsDisplay();
+                Display();
             }
         }
 
@@ -418,7 +420,7 @@ namespace SpiderEye.Mac
         {
             var style = GetStyleMask();
             ObjC.Call(Handle, "setStyleMask:", style);
-            SetNeedsDisplay();
+            Display();
         }
 
         private void Webview_TitleChanged(object sender, string title)
@@ -429,9 +431,12 @@ namespace SpiderEye.Mac
             }
         }
 
-        private void SetNeedsDisplay()
+        private void Display()
         {
-            ObjC.SetProperty(Handle, "needsDisplay", true);
+            // only setting needsDisplay would be a lot better here,
+            // however I couldn't figure it out how this could work with libobjc
+            // setValue:forKey: does not work since needsDisplay is not key value compliant :(
+            ObjC.Call(Handle, "display");
         }
     }
 }

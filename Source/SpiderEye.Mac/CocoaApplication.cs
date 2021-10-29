@@ -5,7 +5,7 @@ using SpiderEye.Mac.Native;
 
 namespace SpiderEye.Mac
 {
-    internal class CocoaApplication : IApplication
+    internal class CocoaApplication : IApplication, IMacOsApplicationOptions
     {
         public IUiFactory Factory { get; }
 
@@ -13,8 +13,52 @@ namespace SpiderEye.Mac
 
         public IntPtr Handle { get; }
 
+        object IApplication.NativeOptions => this;
+
         private static readonly NativeClassDefinition AppDelegateDefinition;
         private readonly NativeClassInstance appDelegate;
+        private MacOsAppearance? macOsAppearanceField;
+        private bool titleBarTransparentField;
+
+        public MacOsAppearance? Appearance
+        {
+            get => macOsAppearanceField;
+            set
+            {
+                if (macOsAppearanceField == value)
+                {
+                    return;
+                }
+
+                macOsAppearanceField = value;
+                var appearance = NSAppearanceName.GetNSAppearance(value);
+                ObjC.Call(Handle, "setAppearance:", appearance);
+            }
+        }
+
+        public MacOsAppearance EffectiveAppearance
+        {
+            get
+            {
+                var appearance = ObjC.GetProperty(Handle, "effectiveAppearance");
+                return NSAppearanceName.GetMacOsAppearance(appearance);
+            }
+        }
+
+        public bool TransparentTitleBar
+        {
+            get => titleBarTransparentField;
+            set
+            {
+                if (titleBarTransparentField == value)
+                {
+                    return;
+                }
+
+                titleBarTransparentField = value;
+                ObjC.SetProperty(Handle, "titlebarAppearsTransparent", value);
+            }
+        }
 
         static CocoaApplication()
         {

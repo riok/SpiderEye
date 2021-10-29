@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 
 namespace SpiderEye
 {
@@ -16,6 +17,11 @@ namespace SpiderEye
         /// Gets the synchronization context.
         /// </summary>
         SynchronizationContext SynchronizationContext { get; }
+
+        /// <summary>
+        /// Gets the native options.
+        /// </summary>
+        object NativeOptions => null;
 
         /// <summary>
         /// Starts the main loop and blocks until the application exits.
