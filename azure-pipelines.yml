@@ -6,14 +6,17 @@ jobs:
   - job: 'BuildPackage'
     strategy:
       matrix:
-        linux:
+        linux-x64:
           imageName: 'ubuntu-18.04'
           rid: 'linux-x64'
-        mac:
-          imageName: 'macos-10.14'
+        mac-x64:
+          imageName: 'macos-11'
           rid: 'osx-x64'
-        windows:
-          rid: 'windows-x64'
+        mac-arm64:
+          imageName: 'macos-11'
+          rid: 'osx-arm64'
+        windows-x64:
+          rid: 'win-x64'
           imageName: 'windows-2019'
 
     pool:
@@ -24,7 +27,7 @@ jobs:
         displayName: 'Use .NET Core sdk'
         inputs:
           packageType: sdk
-          version: 5.0.402
+          useGlobalJson: true
           installationPath: $(Agent.ToolsDirectory)/dotnet
       - task: CmdLine@2
         displayName: 'Install linux dependencies'
@@ -34,7 +37,7 @@ jobs:
       - task: CmdLine@2
         displayName: 'dotnet pack SpiderEye.Native'
         inputs:
-          script: 'dotnet pack --include-symbols --include-source -c $(buildConfiguration) Source/SpiderEye.Native/SpiderEye.Native.csproj -o ./artifacts /p:VersionPrefix=$(versionprefix) /p:VersionSuffix=$(Build.BuildNumber)'
+          script: 'dotnet pack --runtime $(rid) --include-symbols --include-source -c $(buildConfiguration) Source/SpiderEye.Native/SpiderEye.Native.csproj -o ./artifacts /p:VersionPrefix=$(versionprefix) /p:VersionSuffix=$(Build.BuildNumber)'
       - task: PublishBuildArtifacts@1
         inputs:
           PathtoPublish: 'artifacts'
@@ -48,7 +51,7 @@ jobs:
       - task: DownloadBuildArtifacts@0
         inputs:
           downloadPath: 'artifacts'
-          artifactName: 'artifacts-windows-x64'
+          artifactName: 'artifacts-win-x64'
       - task: DownloadBuildArtifacts@0
         inputs:
           downloadPath: 'artifacts'
@@ -57,6 +60,10 @@ jobs:
         inputs:
           downloadPath: 'artifacts'
           artifactName: 'artifacts-osx-x64'
+      - task: DownloadBuildArtifacts@0
+        inputs:
+          downloadPath: 'artifacts'
+          artifactName: 'artifacts-osx-arm64'
       - task: CmdLine@2
         inputs:
           script: 'ls -R artifacts'
@@ -77,7 +84,7 @@ jobs:
         displayName: 'Use .NET Core sdk'
         inputs:
           packageType: sdk
-          version: 5.0.402
+          useGlobalJson: true
           installationPath: $(Agent.ToolsDirectory)/dotnet
       - task: CmdLine@2
         displayName: 'dotnet pack SpiderEye.Core'

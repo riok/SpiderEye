@@ -7,38 +7,35 @@
         <IsMacOs Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::OSX)))' == 'true'">true</IsMacOs>
         <IsLinux Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))' == 'true'">true</IsLinux>
 
-        <TargetFramework Condition="'$(IsWindows)' == 'true'">net5.0-windows7.0</TargetFramework>
-        <TargetFramework Condition="'$(IsLinux)' == 'true'">net5.0</TargetFramework>
-        <TargetFramework Condition="'$(IsMacOs)' == 'true'">net5.0</TargetFramework>
-      
-        <NativeAssetRuntimeIdentifier Condition="'$(IsWindows)' == 'true'">win</NativeAssetRuntimeIdentifier>
-        <NativeAssetRuntimeIdentifier Condition="'$(IsLinux)' == 'true'">linux</NativeAssetRuntimeIdentifier>
-        <NativeAssetRuntimeIdentifier Condition="'$(IsMacOs)' == 'true'">osx</NativeAssetRuntimeIdentifier>
+        <TargetFramework>net6.0</TargetFramework>
+        <TargetFramework Condition="'$(IsWindows)' == 'true'">net6.0-windows7.0</TargetFramework>
         
         <NativeProjectName Condition="'$(IsWindows)' == 'true'">Windows</NativeProjectName>
         <NativeProjectName Condition="'$(IsLinux)' == 'true'">Linux</NativeProjectName>
         <NativeProjectName Condition="'$(IsMacOs)' == 'true'">Mac</NativeProjectName>
+
+        <NativeProjectTargetFileName>SpiderEye.Native.dll</NativeProjectTargetFileName>
+        <NativeProjectTargetFile>..\SpiderEye.$(NativeProjectName)\bin\$(Configuration)\$(TargetFramework)\$(NativeProjectTargetFileName)</NativeProjectTargetFile>
+        <NativeProjectPackagePath>runtimes/$(RuntimeIdentifiers)/lib/$(TargetFramework)/$(NativeProjectTargetFileName)</NativeProjectPackagePath>
     </PropertyGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\SpiderEye.Core\SpiderEye.Core.csproj" />
-        <ProjectReference Condition="'$(IsWindows)' == 'true'" PrivateAssets="all" Include="..\SpiderEye.Windows\SpiderEye.Windows.csproj" />
-        <ProjectReference Condition="'$(IsMacOs)' == 'true'" PrivateAssets="all" Include="..\SpiderEye.Mac\SpiderEye.Mac.csproj" />
-        <ProjectReference Condition="'$(IsLinux)' == 'true'" PrivateAssets="all" Include="..\SpiderEye.Linux\SpiderEye.Linux.csproj" />
+        <ProjectReference PrivateAssets="all" Include="..\SpiderEye.$(NativeProjectName)\SpiderEye.$(NativeProjectName).csproj" />
     </ItemGroup>
 
     <ItemGroup>
-        <Content Include="$(OutputPath)SpiderEye.Native.dll">
+        <Content Include="$(OutputPath)$(TargetFileName)">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-            <Link>SpiderEye.Native.dll</Link>
+            <Link>$(TargetFileName)</Link>
             <Pack>true</Pack>
-            <PackagePath>ref/$(TargetFramework)/SpiderEye.Native.dll</PackagePath>
+            <PackagePath>ref/$(TargetFramework)/$(TargetFileName)</PackagePath>
         </Content>
-        <Content Include="..\SpiderEye.$(NativeProjectName)\bin\$(Configuration)\$(TargetFramework)\SpiderEye.Native.dll">
+        <Content Include="$(NativeProjectTargetFile)">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-            <Link>SpiderEye.Native.dll</Link>
+            <Link>$(NativeProjectTargetFileName)</Link>
             <Pack>true</Pack>
-            <PackagePath>runtimes/$(NativeAssetRuntimeIdentifier)/lib/$(TargetFramework)/SpiderEye.Native.dll</PackagePath>
+            <PackagePath>$(NativeProjectPackagePath)</PackagePath>
         </Content>
     </ItemGroup>
 </Project>
