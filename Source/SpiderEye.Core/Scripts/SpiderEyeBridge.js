@@ -60,21 +60,25 @@
         var result = undefined;
         var error = undefined;
         var callback = events[name];
-        if (callback) {
-            try { result = callback(value); }
-            catch (e) {
-                if (e instanceof Error) {
-                    error = {
-                        message: e.message,
-                        name: e.name,
-                        stack: e.stack
-                    };
-                } else {
-                    error = { message: String(e) };
-                }
+        if (!callback) {
+            return convertPayloadFn({
+                success: false,
+                noSubscriber: true
+            });
+        }
+
+        try {
+            result = callback(value);
+        } catch (e) {
+            if (e instanceof Error) {
+                error = {
+                    message: e.message,
+                    name: e.name,
+                    stack: e.stack
+                };
+            } else {
+                error = { message: String(e) };
             }
-        } else {
-            return "{ \"success\": false, \"noSubscriber\": true }";
         }
 
         return convertPayloadFn({

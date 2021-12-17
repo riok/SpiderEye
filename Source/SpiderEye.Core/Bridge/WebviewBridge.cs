@@ -141,20 +141,24 @@ namespace SpiderEye.Bridge
         {
             var result = JsonConverter.Deserialize<EventResultModel>(resultJson);
 
-            if (result.NoSubscriber) { throw new InvalidOperationException($"Event with ID \"{id}\" does not exist."); }
-
-            if (!result.Success)
+            if (result.NoSubscriber)
             {
-                string message = result.Error.Message;
-                if (string.IsNullOrWhiteSpace(message)) { message = $"Error executing Event with ID \"{id}\"."; }
-                else if (!string.IsNullOrWhiteSpace(result.Error.Name)) { message = $"{result.Error.Name}: {message}"; }
-
-                string stackTrace = result.Error.Stack;
-                if (string.IsNullOrWhiteSpace(stackTrace)) { throw new ScriptException(message); }
-                else { throw new ScriptException(message, new ScriptException(message, stackTrace)); }
+                throw new MissingEventException(id);
             }
 
-            return result;
+            if (result.Success)
+            {
+                return result;
+            }
+
+            string message = result.Error.Message;
+            if (string.IsNullOrWhiteSpace(message)) { message = $"Error executing Event with ID \"{id}\"."; }
+            else if (!string.IsNullOrWhiteSpace(result.Error.Name)) { message = $"{result.Error.Name}: {message}"; }
+
+            string stackTrace = result.Error.Stack;
+            if (string.IsNullOrWhiteSpace(stackTrace)) { throw new ScriptException(message); }
+
+            throw new ScriptException(message, new ScriptException(message, stackTrace));
         }
 
         private object ResolveInvokeResult(EventResultModel result, Type t)
