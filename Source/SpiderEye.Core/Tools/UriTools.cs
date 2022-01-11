@@ -11,6 +11,11 @@ namespace SpiderEye.Tools
             return $"{scheme}://resources.{CreateRandomString(8)}.internal";
         }
 
+        public static string GetRandomFileHost()
+        {
+            return $"files.{CreateRandomString(8)}.internal";
+        }
+
         private static string CreateRandomString(int length)
         {
             const string possible = "0123456789abcdefghijklmnopqrstuvwxyz";

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Threading.Tasks;
@@ -43,6 +44,7 @@ namespace SpiderEye.Windows
         private CoreWebView2Environment webView2Environment;
         private string initialUriToLoad;
         private bool initialWebMessageEnabled;
+        private readonly Dictionary<string, string> hostToDirectoryMappingsToRegister = new();
 
         public WinFormsWebview(WebviewBridge bridge)
         {
@@ -86,6 +88,22 @@ namespace SpiderEye.Windows
             return webview.ExecuteScriptAsync(script);
         }
 
+        public string RegisterLocalDirectoryMapping(string directory)
+        {
+            var host = UriTools.GetRandomFileHost();
+
+            if (webview.CoreWebView2 == null)
+            {
+                hostToDirectoryMappingsToRegister[host] = directory;
+            }
+            else
+            {
+                RegisterLocalDirectoryMapping(host, directory);
+            }
+
+            return $"https://{host}";
+        }
+
         public void Dispose()
         {
             webview?.Dispose();
@@ -123,6 +141,13 @@ namespace SpiderEye.Windows
             {
                 webview.CoreWebView2.Navigate(initialUriToLoad);
             }
+
+            foreach (var (host, directory) in hostToDirectoryMappingsToRegister)
+            {
+                RegisterLocalDirectoryMapping(host, directory);
+            }
+
+            hostToDirectoryMappingsToRegister.Clear();
         }
 
         private void Webview_WebResourceRequested(object sender, CoreWebView2WebResourceRequestedEventArgs e)
@@ -163,6 +188,11 @@ namespace SpiderEye.Windows
             var args = new NavigatingEventArgs(new Uri(e.Uri));
             Navigating?.Invoke(this, args);
             e.Cancel = args.Cancel;
+        }
+
+        private void RegisterLocalDirectoryMapping(string host, string directory)
+        {
+            webview.CoreWebView2.SetVirtualHostNameToFolderMapping(host, directory, CoreWebView2HostResourceAccessKind.Allow);
         }
     }
 }

@@ -233,6 +233,16 @@ namespace SpiderEye
             NativeWindow.Webview.LoadUri(uri);
         }
 
+        /// <summary>
+        /// Registers a local directory mapping, allowing to serve files from a directory via a custom host.
+        /// </summary>
+        /// <param name="directory">The directory to serve.</param>
+        /// <returns>The custom host for the directory mapping.</returns>
+        public string RegisterLocalDirectoryMapping(string directory)
+        {
+            return NativeWindow.Webview.RegisterLocalDirectoryMapping(directory);
+        }
+
         /// <inheritdoc />
         public void Dispose()
         {

@@ -6,6 +6,8 @@ namespace SpiderEye.Playground.Core
 {
     public abstract class ProgramBase
     {
+        public static string CustomFileHost { get; private set; }
+
         private static Window _mainWindow;
         private static ServiceProvider _serviceProvider;
 
@@ -71,6 +73,8 @@ namespace SpiderEye.Playground.Core
                 {
                     window.MacOsOptions.Appearance = MacOsAppearance.DarkAqua;
                 }
+
+                CustomFileHost = window.RegisterLocalDirectoryMapping(".");
 
                 SetDevSettings(window);
 

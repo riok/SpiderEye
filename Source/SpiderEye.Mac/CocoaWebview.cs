@@ -138,6 +138,12 @@ namespace SpiderEye.Mac
             return taskResult.Task;
         }
 
+        public string RegisterLocalDirectoryMapping(string directory)
+        {
+            // TODO implement
+            return string.Empty;
+        }
+
         public void Dispose()
         {
             // webview will be released automatically

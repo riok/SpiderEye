@@ -7,6 +7,12 @@
   <ItemGroup>
     <Compile Remove="node_modules\**" />
     <None Remove="node_modules\**" />
+    <None Update="logo.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="dummy.pdf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   
   <ItemGroup>
