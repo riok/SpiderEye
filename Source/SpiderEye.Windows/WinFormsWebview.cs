@@ -44,7 +44,7 @@ namespace SpiderEye.Windows
         private CoreWebView2Environment webView2Environment;
         private string initialUriToLoad;
         private bool initialWebMessageEnabled;
-        private readonly Dictionary<string, string> hostToDirectoryMappingsToRegister = new();
+        private readonly Dictionary<Uri, string> hostToDirectoryMappingsToRegister = new();
 
         public WinFormsWebview(WebviewBridge bridge)
         {
@@ -58,7 +58,7 @@ namespace SpiderEye.Windows
             webview.NavigationStarting += Webview_NavigationStarting;
             webview.CoreWebView2InitializationCompleted += WebViewInitializationCompleted;
 
-            customHost = new Uri(UriTools.GetRandomResourceUrl(CustomScheme));
+            customHost = UriTools.GetRandomResourceUrl(CustomScheme);
         }
 
         public void UpdateBackgroundColor(byte r, byte g, byte b)
@@ -88,9 +88,9 @@ namespace SpiderEye.Windows
             return webview.ExecuteScriptAsync(script);
         }
 
-        public string RegisterLocalDirectoryMapping(string directory)
+        public Uri RegisterLocalDirectoryMapping(string directory)
         {
-            var host = UriTools.GetRandomFileHost();
+            var host = new Uri(UriTools.GetRandomFileHostUrl("https"), "/");
 
             if (webview.CoreWebView2 == null)
             {
@@ -101,7 +101,7 @@ namespace SpiderEye.Windows
                 RegisterLocalDirectoryMapping(host, directory);
             }
 
-            return $"https://{host}";
+            return host;
         }
 
         public void Dispose()
@@ -190,9 +190,9 @@ namespace SpiderEye.Windows
             e.Cancel = args.Cancel;
         }
 
-        private void RegisterLocalDirectoryMapping(string host, string directory)
+        private void RegisterLocalDirectoryMapping(Uri host, string directory)
         {
-            webview.CoreWebView2.SetVirtualHostNameToFolderMapping(host, directory, CoreWebView2HostResourceAccessKind.Allow);
+            webview.CoreWebView2.SetVirtualHostNameToFolderMapping(host.GetComponents(UriComponents.Host, UriFormat.Unescaped), directory, CoreWebView2HostResourceAccessKind.Allow);
         }
     }
 }

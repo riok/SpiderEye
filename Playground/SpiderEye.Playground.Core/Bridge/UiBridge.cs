@@ -38,7 +38,7 @@ namespace SpiderEye.Playground.Core
             return instanceId;
         }
 
-        public string GetCustomFileHost()
+        public Uri GetCustomFileHost()
         {
             return ProgramBase.CustomFileHost;
         }

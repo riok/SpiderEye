@@ -268,3 +268,4 @@ Publish
 
 # Angular publish folder from examples
 dist
+Source/SpiderEye.Client/src/__ngcc_entry_points__.json

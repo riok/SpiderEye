@@ -1,4 +1,5 @@
-﻿using System.Security.Cryptography;
+﻿using System;
+using System.Security.Cryptography;
 
 namespace SpiderEye.Tools
 {
@@ -6,14 +7,14 @@ namespace SpiderEye.Tools
     {
         private static readonly RandomNumberGenerator Rng = RandomNumberGenerator.Create();
 
-        public static string GetRandomResourceUrl(string scheme)
+        public static Uri GetRandomResourceUrl(string scheme)
         {
-            return $"{scheme}://resources.{CreateRandomString(8)}.internal";
+            return new Uri($"{scheme}://resources.{CreateRandomString(8)}.internal");
         }
 
-        public static string GetRandomFileHost()
+        public static Uri GetRandomFileHostUrl(string scheme)
         {
-            return $"files.{CreateRandomString(8)}.internal";
+            return new Uri($"{scheme}://files.{CreateRandomString(8)}.internal");
         }
 
         private static string CreateRandomString(int length)

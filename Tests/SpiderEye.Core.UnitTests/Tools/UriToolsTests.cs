@@ -8,9 +8,9 @@ namespace SpiderEye.Tools
         [Fact]
         public void GetRandomResourceUrl_WithScheme_ReturnsResourceUrl()
         {
-            string result = UriTools.GetRandomResourceUrl("somescheme");
+            Uri result = UriTools.GetRandomResourceUrl("somescheme");
 
-            Assert.Matches(@"somescheme://resources\.[0-9a-z]{8}\.internal", result);
+            Assert.Matches(@"somescheme://resources\.[0-9a-z]{8}\.internal", result.ToString());
         }
     }
 }

@@ -31,6 +31,6 @@ namespace SpiderEye
         /// </summary>
         /// <param name="directory">The directory to serve.</param>
         /// <returns>The scheme + host URI, which maps to the directory.</returns>
-        string RegisterLocalDirectoryMapping(string directory);
+        Uri RegisterLocalDirectoryMapping(string directory);
     }
 }

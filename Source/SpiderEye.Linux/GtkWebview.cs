@@ -36,6 +36,7 @@ namespace SpiderEye.Linux
         public readonly IntPtr Handle;
 
         private const string CustomScheme = "spidereye";
+        private const string DirectoryMappingPrefix = $"/{CustomScheme}-directory-mapping-";
         private const int UriCallbackFileNotFound = 4;
         private const int UriCallbackUnspecifiedError = 24;
         private readonly WebviewBridge bridge;
@@ -96,7 +97,7 @@ namespace SpiderEye.Linux
             GLib.ConnectSignal(Handle, "close", closeDelegate, IntPtr.Zero);
             GLib.ConnectSignal(Handle, "notify::title", titleChangeDelegate, IntPtr.Zero);
 
-            customHost = new Uri(UriTools.GetRandomResourceUrl(CustomScheme));
+            customHost = UriTools.GetRandomResourceUrl(CustomScheme);
 
             IntPtr context = WebKit.Context.Get(Handle);
             using (GLibString gscheme = CustomScheme)
@@ -105,14 +106,14 @@ namespace SpiderEye.Linux
             }
         }
 
-        public string RegisterLocalDirectoryMapping(string directory)
+        public Uri RegisterLocalDirectoryMapping(string directory)
         {
             // While GTK WebView allows to register custom schemes for this scenario, we ran into CORS errors since the scheme and host differ.
             // Trying to work around the CORS issues didn't work, so we chose a different approach where we re-use our existing custom scheme.
             // We just register a custom API path. When we receive a callback on that path, return the file contents.
-            var customUrlPath = $"{CustomScheme}-directory-mapping-{schemeToLocalDirectoryMapping.Count}";
+            var customUrlPath = DirectoryMappingPrefix + schemeToLocalDirectoryMapping.Count;
             schemeToLocalDirectoryMapping.Add(customUrlPath, directory);
-            return $"{customHost}{customUrlPath}/";
+            return new Uri($"{customHost}{customUrlPath}/");
         }
 
         public void UpdateBackgroundColor(string color)
@@ -257,13 +258,16 @@ namespace SpiderEye.Linux
                 }
 
                 var path = uri.GetComponents(UriComponents.Path, UriFormat.Unescaped);
-                foreach (var (customScheme, directory) in schemeToLocalDirectoryMapping)
+                if (path.StartsWith(DirectoryMappingPrefix))
                 {
-                    if (path.StartsWith(customScheme))
+                    foreach (var (pathPrefix, directory) in schemeToLocalDirectoryMapping)
                     {
-                        // This is a request to a local file
-                        LocalFileSchemeCallback(request, customScheme, directory);
-                        return;
+                        if (path.StartsWith(pathPrefix))
+                        {
+                            // This is a request to a local file
+                            LocalFileSchemeCallback(request, pathPrefix, directory);
+                            return;
+                        }
                     }
                 }
 
@@ -357,7 +361,7 @@ namespace SpiderEye.Linux
             }
         }
 
-        private void LocalFileSchemeCallback(IntPtr request, string scheme, string directory)
+        private void LocalFileSchemeCallback(IntPtr request, string pathPrefix, string directory)
         {
             var file = IntPtr.Zero;
             var fileStream = IntPtr.Zero;
@@ -367,10 +371,17 @@ namespace SpiderEye.Linux
             {
                 var uri = new Uri(GLibString.FromPointer(WebKit.UriScheme.GetRequestUri(request)));
                 var requestedFile = uri.GetComponents(UriComponents.Path, UriFormat.Unescaped)
-                    .Replace(scheme, string.Empty)
+                    .Substring(pathPrefix.Length)
                     .TrimStart('/');
 
-                using GLibString filePath = Path.Join(directory, requestedFile);
+                var fullFilePath = Path.GetFullPath(Path.Join(directory, requestedFile));
+                if (!fullFilePath.StartsWith(directory))
+                {
+                    FinishUriSchemeCallbackWithError(request, UriCallbackFileNotFound);
+                    return;
+                }
+
+                using GLibString filePath = fullFilePath;
                 file = GLib.FileForPath(filePath);
                 fileStream = GLib.ReadFile(file, IntPtr.Zero, IntPtr.Zero);
 

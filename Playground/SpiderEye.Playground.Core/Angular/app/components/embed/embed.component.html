@@ -2,10 +2,18 @@
 
 <div class="app-panel">
     <p>
-        Embedded image:
+        Embedded image via object:
     </p>
 
     <object *ngIf="imageUrl" [data]="imageUrl | safe" type="image/png"></object>
+</div>
+
+<div class="app-panel">
+    <p>
+        Embedded image via img tag:
+    </p>
+
+    <img *ngIf="imageUrl" [src]="imageUrl | safe" />
 </div>
 
 <div class="app-panel">

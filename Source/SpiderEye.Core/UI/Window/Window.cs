@@ -238,7 +238,7 @@ namespace SpiderEye
         /// </summary>
         /// <param name="directory">The directory to serve.</param>
         /// <returns>The custom host for the directory mapping.</returns>
-        public string RegisterLocalDirectoryMapping(string directory)
+        public Uri RegisterLocalDirectoryMapping(string directory)
         {
             return NativeWindow.Webview.RegisterLocalDirectoryMapping(directory);
         }
