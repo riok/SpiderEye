@@ -38,6 +38,11 @@ namespace SpiderEye.Playground.Core
             return instanceId;
         }
 
+        public Uri GetCustomFileHost()
+        {
+            return ProgramBase.CustomFileHost;
+        }
+
         public double Power(PowerModel model)
         {
             return Math.Pow(model.Value, model.Power);

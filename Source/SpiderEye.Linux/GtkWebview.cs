@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -35,6 +36,7 @@ namespace SpiderEye.Linux
         public readonly IntPtr Handle;
 
         private const string CustomScheme = "spidereye";
+        private const string DirectoryMappingPrefix = $"/{CustomScheme}-directory-mapping-";
         private const int UriCallbackFileNotFound = 4;
         private const int UriCallbackUnspecifiedError = 24;
         private readonly WebviewBridge bridge;
@@ -51,6 +53,7 @@ namespace SpiderEye.Linux
         private readonly WebviewDelegate titleChangeDelegate;
         private readonly WebKitUriSchemeRequestDelegate uriSchemeCallback;
         private readonly ConcurrentDictionary<Guid, GAsyncReadyDelegate> scriptCallbacks;
+        private readonly Dictionary<string, string> schemeToLocalDirectoryMapping = new();
 
         private bool loadEventHandled = false;
         private bool enableDevToolsField;
@@ -79,7 +82,7 @@ namespace SpiderEye.Linux
 
             using (GLibString initScript = Resources.GetInitScript("Linux"))
             {
-                var script = WebKit.Manager.CreateScript(initScript, WebKitInjectedFrames.AllFrames, WebKitInjectionTime.DocumentStart, IntPtr.Zero, IntPtr.Zero);
+                var script = WebKit.Manager.CreateScript(initScript, WebKitInjectedFrames.TopFrame, WebKitInjectionTime.DocumentStart, IntPtr.Zero, IntPtr.Zero);
                 WebKit.Manager.AddScript(manager, script);
                 WebKit.Manager.UnrefScript(script);
             }
@@ -94,13 +97,23 @@ namespace SpiderEye.Linux
             GLib.ConnectSignal(Handle, "close", closeDelegate, IntPtr.Zero);
             GLib.ConnectSignal(Handle, "notify::title", titleChangeDelegate, IntPtr.Zero);
 
-            customHost = new Uri(UriTools.GetRandomResourceUrl(CustomScheme));
+            customHost = UriTools.GetRandomResourceUrl(CustomScheme);
 
             IntPtr context = WebKit.Context.Get(Handle);
             using (GLibString gscheme = CustomScheme)
             {
                 WebKit.Context.RegisterUriScheme(context, gscheme, uriSchemeCallback, IntPtr.Zero, IntPtr.Zero);
             }
+        }
+
+        public Uri RegisterLocalDirectoryMapping(string directory)
+        {
+            // While GTK WebView allows to register custom schemes for this scenario, we ran into CORS errors since the scheme and host differ.
+            // Trying to work around the CORS issues didn't work, so we chose a different approach where we re-use our existing custom scheme.
+            // We just register a custom API path. When we receive a callback on that path, return the file contents.
+            var customUrlPath = DirectoryMappingPrefix + schemeToLocalDirectoryMapping.Count;
+            schemeToLocalDirectoryMapping.Add(customUrlPath, directory);
+            return new Uri($"{customHost}{customUrlPath}/");
         }
 
         public void UpdateBackgroundColor(string color)
@@ -237,61 +250,78 @@ namespace SpiderEye.Linux
             {
                 var uri = new Uri(GLibString.FromPointer(WebKit.UriScheme.GetRequestUri(request)));
                 var scheme = uri.GetComponents(UriComponents.Scheme, UriFormat.Unescaped);
-                if (scheme == CustomScheme)
+                if (scheme != CustomScheme)
                 {
-                    using (var contentStream = await Application.ContentProvider.GetStreamAsync(uri))
-                    {
-                        if (contentStream != null)
-                        {
-                            IntPtr stream = IntPtr.Zero;
-                            try
-                            {
-                                if (contentStream is UnmanagedMemoryStream unmanagedMemoryStream)
-                                {
-                                    unsafe
-                                    {
-                                        long length = unmanagedMemoryStream.Length - unmanagedMemoryStream.Position;
-                                        stream = GLib.CreateStreamFromData((IntPtr)unmanagedMemoryStream.PositionPointer, length, IntPtr.Zero);
-                                        FinishUriSchemeCallback(request, stream, length, uri);
-                                        return;
-                                    }
-                                }
-                                else
-                                {
-                                    byte[] data;
-                                    long length;
-                                    if (contentStream is MemoryStream memoryStream)
-                                    {
-                                        data = memoryStream.GetBuffer();
-                                        length = memoryStream.Length;
-                                    }
-                                    else
-                                    {
-                                        using (var copyStream = new MemoryStream())
-                                        {
-                                            await contentStream.CopyToAsync(copyStream);
-                                            data = copyStream.GetBuffer();
-                                            length = copyStream.Length;
-                                        }
-                                    }
 
-                                    unsafe
-                                    {
-                                        fixed (byte* dataPtr = data)
-                                        {
-                                            stream = GLib.CreateStreamFromData((IntPtr)dataPtr, length, IntPtr.Zero);
-                                            FinishUriSchemeCallback(request, stream, length, uri);
-                                            return;
-                                        }
-                                    }
-                                }
-                            }
-                            finally { if (stream != IntPtr.Zero) { GLib.UnrefObject(stream); } }
+                    FinishUriSchemeCallbackWithError(request, UriCallbackFileNotFound);
+                    return;
+                }
+
+                var path = uri.GetComponents(UriComponents.Path, UriFormat.Unescaped);
+                if (path.StartsWith(DirectoryMappingPrefix))
+                {
+                    foreach (var (pathPrefix, directory) in schemeToLocalDirectoryMapping)
+                    {
+                        if (path.StartsWith(pathPrefix))
+                        {
+                            // This is a request to a local file
+                            LocalFileSchemeCallback(request, pathPrefix, directory);
+                            return;
                         }
                     }
                 }
 
-                FinishUriSchemeCallbackWithError(request, UriCallbackFileNotFound);
+                using var contentStream = await Application.ContentProvider.GetStreamAsync(uri);
+                if (contentStream == null)
+                {
+                    FinishUriSchemeCallbackWithError(request, UriCallbackFileNotFound);
+                    return;
+                }
+
+                IntPtr stream = IntPtr.Zero;
+                try
+                {
+                    if (contentStream is UnmanagedMemoryStream unmanagedMemoryStream)
+                    {
+                        unsafe
+                        {
+                            long length = unmanagedMemoryStream.Length - unmanagedMemoryStream.Position;
+                            stream = GLib.CreateStreamFromData((IntPtr)unmanagedMemoryStream.PositionPointer, length, IntPtr.Zero);
+                            FinishUriSchemeCallback(request, stream, length, uri);
+                            return;
+                        }
+                    }
+                    else
+                    {
+                        byte[] data;
+                        long length;
+                        if (contentStream is MemoryStream memoryStream)
+                        {
+                            data = memoryStream.GetBuffer();
+                            length = memoryStream.Length;
+                        }
+                        else
+                        {
+                            using (var copyStream = new MemoryStream())
+                            {
+                                await contentStream.CopyToAsync(copyStream);
+                                data = copyStream.GetBuffer();
+                                length = copyStream.Length;
+                            }
+                        }
+
+                        unsafe
+                        {
+                            fixed (byte* dataPtr = data)
+                            {
+                                stream = GLib.CreateStreamFromData((IntPtr)dataPtr, length, IntPtr.Zero);
+                                FinishUriSchemeCallback(request, stream, length, uri);
+                                return;
+                            }
+                        }
+                    }
+                }
+                finally { if (stream != IntPtr.Zero) { GLib.UnrefObject(stream); } }
             }
             catch { FinishUriSchemeCallbackWithError(request, UriCallbackUnspecifiedError); }
         }
@@ -328,6 +358,60 @@ namespace SpiderEye.Linux
                 if (EnableDevTools) { ShowDevTools(); }
 
                 loadEventHandled = true;
+            }
+        }
+
+        private void LocalFileSchemeCallback(IntPtr request, string pathPrefix, string directory)
+        {
+            var file = IntPtr.Zero;
+            var fileStream = IntPtr.Zero;
+            var fileInfo = IntPtr.Zero;
+
+            try
+            {
+                var uri = new Uri(GLibString.FromPointer(WebKit.UriScheme.GetRequestUri(request)));
+                var requestedFile = uri.GetComponents(UriComponents.Path, UriFormat.Unescaped)
+                    .Substring(pathPrefix.Length)
+                    .TrimStart('/');
+
+                var fullFilePath = Path.GetFullPath(Path.Join(directory, requestedFile));
+                if (!fullFilePath.StartsWith(directory))
+                {
+                    FinishUriSchemeCallbackWithError(request, UriCallbackFileNotFound);
+                    return;
+                }
+
+                using GLibString filePath = fullFilePath;
+                file = GLib.FileForPath(filePath);
+                fileStream = GLib.ReadFile(file, IntPtr.Zero, IntPtr.Zero);
+
+                if (fileStream == IntPtr.Zero)
+                {
+                    FinishUriSchemeCallbackWithError(request, UriCallbackUnspecifiedError);
+                    return;
+                }
+
+                using GLibString sizeAttribute = "standard::size";
+                fileInfo = GLib.QueryFileInfo(fileStream, sizeAttribute, IntPtr.Zero, IntPtr.Zero);
+                var fileSize = GLib.GetSizeFromFileInfo(fileInfo);
+                FinishUriSchemeCallback(request, fileStream, fileSize, uri);
+            }
+            finally
+            {
+                if (file != IntPtr.Zero)
+                {
+                    GLib.UnrefObject(file);
+                }
+
+                if (fileStream != IntPtr.Zero)
+                {
+                    GLib.UnrefObject(fileStream);
+                }
+
+                if (fileInfo != IntPtr.Zero)
+                {
+                    GLib.UnrefObject(fileInfo);
+                }
             }
         }
 

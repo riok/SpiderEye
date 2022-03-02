@@ -1,0 +1,25 @@
+﻿<h1>SpiderEye Embed</h1>
+
+<div class="app-panel">
+    <p>
+        Embedded image via object:
+    </p>
+
+    <object *ngIf="imageUrl" [data]="imageUrl | safe" type="image/png"></object>
+</div>
+
+<div class="app-panel">
+    <p>
+        Embedded image via img tag:
+    </p>
+
+    <img *ngIf="imageUrl" [src]="imageUrl | safe" />
+</div>
+
+<div class="app-panel">
+    <p>
+        Embedded PDF (doesn't work on Linux):
+    </p>
+
+    <object *ngIf="pdfUrl" [data]="pdfUrl | safe" type="application/pdf"></object>
+</div>

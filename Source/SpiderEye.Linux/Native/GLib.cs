@@ -22,6 +22,18 @@ namespace SpiderEye.Linux.Native
         [DllImport(GIONativeDll, EntryPoint = "g_memory_input_stream_new_from_data", CallingConvention = CallingConvention.Cdecl)]
         public static extern IntPtr CreateStreamFromData(IntPtr data, long len, IntPtr destroy);
 
+        [DllImport(GIONativeDll, EntryPoint = "g_file_new_for_path", CallingConvention = CallingConvention.Cdecl)]
+        public static extern IntPtr FileForPath(IntPtr path);
+
+        [DllImport(GIONativeDll, EntryPoint = "g_file_read", CallingConvention = CallingConvention.Cdecl)]
+        public static extern IntPtr ReadFile(IntPtr file, IntPtr cancellable, IntPtr error);
+
+        [DllImport(GIONativeDll, EntryPoint = "g_file_input_stream_query_info", CallingConvention = CallingConvention.Cdecl)]
+        public static extern IntPtr QueryFileInfo(IntPtr fileStream, IntPtr attributes, IntPtr cancellable, IntPtr error);
+
+        [DllImport(GIONativeDll, EntryPoint = "g_file_info_get_size", CallingConvention = CallingConvention.Cdecl)]
+        public static extern long GetSizeFromFileInfo(IntPtr fileInfo);
+
         [DllImport(GObjectNativeDll, EntryPoint = "g_object_unref", CallingConvention = CallingConvention.Cdecl)]
         public static extern void UnrefObject(IntPtr obj);
 

@@ -1,9 +1,10 @@
-﻿import { NgModule } from '@angular/core';
-import { Routes, RouterModule } from '@angular/router';
+﻿import {NgModule} from '@angular/core';
+import {RouterModule, Routes} from '@angular/router';
 
-import { HomeComponent } from './components/home/home.component';
-import { ApiComponent } from './components/api/api.component';
-import { BridgeComponent } from './components/bridge/bridge.component';
+import {HomeComponent} from './components/home/home.component';
+import {ApiComponent} from './components/api/api.component';
+import {BridgeComponent} from './components/bridge/bridge.component';
+import {EmbedComponent} from "./components/embed/embed.component";
 
 const routes: Routes = [{
     path: '',
@@ -18,6 +19,9 @@ const routes: Routes = [{
 }, {
     path: 'Bridge',
     component: BridgeComponent,
+}, {
+    path: 'Embed',
+    component: EmbedComponent,
 }, {
     path: '**',
     redirectTo: '/'

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Threading.Tasks;
@@ -43,6 +44,7 @@ namespace SpiderEye.Windows
         private CoreWebView2Environment webView2Environment;
         private string initialUriToLoad;
         private bool initialWebMessageEnabled;
+        private readonly Dictionary<Uri, string> hostToDirectoryMappingsToRegister = new();
 
         public WinFormsWebview(WebviewBridge bridge)
         {
@@ -56,7 +58,7 @@ namespace SpiderEye.Windows
             webview.NavigationStarting += Webview_NavigationStarting;
             webview.CoreWebView2InitializationCompleted += WebViewInitializationCompleted;
 
-            customHost = new Uri(UriTools.GetRandomResourceUrl(CustomScheme));
+            customHost = UriTools.GetRandomResourceUrl(CustomScheme);
         }
 
         public void UpdateBackgroundColor(byte r, byte g, byte b)
@@ -84,6 +86,22 @@ namespace SpiderEye.Windows
         public Task<string> ExecuteScriptAsync(string script)
         {
             return webview.ExecuteScriptAsync(script);
+        }
+
+        public Uri RegisterLocalDirectoryMapping(string directory)
+        {
+            var host = new Uri(UriTools.GetRandomFileHostUrl("https"), "/");
+
+            if (webview.CoreWebView2 == null)
+            {
+                hostToDirectoryMappingsToRegister[host] = directory;
+            }
+            else
+            {
+                RegisterLocalDirectoryMapping(host, directory);
+            }
+
+            return host;
         }
 
         public void Dispose()
@@ -123,6 +141,13 @@ namespace SpiderEye.Windows
             {
                 webview.CoreWebView2.Navigate(initialUriToLoad);
             }
+
+            foreach (var (host, directory) in hostToDirectoryMappingsToRegister)
+            {
+                RegisterLocalDirectoryMapping(host, directory);
+            }
+
+            hostToDirectoryMappingsToRegister.Clear();
         }
 
         private void Webview_WebResourceRequested(object sender, CoreWebView2WebResourceRequestedEventArgs e)
@@ -163,6 +188,11 @@ namespace SpiderEye.Windows
             var args = new NavigatingEventArgs(new Uri(e.Uri));
             Navigating?.Invoke(this, args);
             e.Cancel = args.Cancel;
+        }
+
+        private void RegisterLocalDirectoryMapping(Uri host, string directory)
+        {
+            webview.CoreWebView2.SetVirtualHostNameToFolderMapping(host.GetComponents(UriComponents.Host, UriFormat.Unescaped), directory, CoreWebView2HostResourceAccessKind.Allow);
         }
     }
 }
