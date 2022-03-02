@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using System.Threading;
+using SpiderEye.Linux.Interop;
 using SpiderEye.Linux.Native;
 
 namespace SpiderEye.Linux
@@ -13,6 +14,7 @@ namespace SpiderEye.Linux
         }
 
         private readonly int mainThreadId;
+        private readonly GSourceDelegate invokeCallbackDelegate = InvokeCallback;
 
         public GtkSynchronizationContext()
             : this(Thread.CurrentThread.ManagedThreadId)
@@ -35,7 +37,7 @@ namespace SpiderEye.Linux
 
             var data = new InvokeState(d, state, false);
             var handle = GCHandle.Alloc(data, GCHandleType.Normal);
-            GLib.ContextInvoke(IntPtr.Zero, InvokeCallback, GCHandle.ToIntPtr(handle));
+            GLib.ContextInvoke(IntPtr.Zero, invokeCallbackDelegate, GCHandle.ToIntPtr(handle));
         }
 
         public override void Send(SendOrPostCallback d, object state)
@@ -50,7 +52,7 @@ namespace SpiderEye.Linux
 
                 lock (data)
                 {
-                    GLib.ContextInvoke(IntPtr.Zero, InvokeCallback, GCHandle.ToIntPtr(handle));
+                    GLib.ContextInvoke(IntPtr.Zero, invokeCallbackDelegate, GCHandle.ToIntPtr(handle));
                     Monitor.Wait(data);
                 }
             }
