@@ -107,7 +107,12 @@ namespace SpiderEye.Bridge
             await Task.Run(async () =>
             {
                 var info = JsonConverter.Deserialize<InvokeInfoModel>(data);
-                if (info != null)
+                if (info == null)
+                {
+                    return;
+                }
+
+                try
                 {
                     if (info.Type == "title")
                     {
@@ -124,6 +129,12 @@ namespace SpiderEye.Bridge
                         string message = $"Invalid invoke type \"{info.Type ?? "<null>"}\".";
                         await EndApiCall(info, ApiResultModel.FromError(message));
                     }
+                }
+                catch (Exception ex)
+                {
+                    // Not handling this exception would result in the whole application crashing.
+                    // Report the error via other means, since we cannot throw an exception here.
+                    Application.ReportInternalError($"Exception while handling script call for '{data}'", ex);
                 }
             });
         }

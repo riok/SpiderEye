@@ -15,6 +15,11 @@ namespace SpiderEye
     public static class Application
     {
         /// <summary>
+        /// Event handler to subscribe to SpiderEye internal errors that cannot be caught via normal exception handling.
+        /// </summary>
+        public static event EventHandler<InternalErrorEventArgs> InternalError;
+
+        /// <summary>
         /// Gets or sets a value indicating whether the application should exit once the last window is closed.
         /// Default is true.
         /// </summary>
@@ -213,6 +218,16 @@ namespace SpiderEye
             app = application ?? throw new ArgumentNullException(nameof(application));
 
             SynchronizationContext.SetSynchronizationContext(app.SynchronizationContext);
+        }
+
+        internal static void ReportInternalError(string message, Exception exception = null)
+        {
+            var eventArgs = new InternalErrorEventArgs
+            {
+                Message = message,
+                Exception = exception,
+            };
+            InternalError?.Invoke(typeof(Application), eventArgs);
         }
 
         private static void InvokeSafely(Action action)
