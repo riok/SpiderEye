@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using SpiderEye.Bridge;
 using SpiderEye.Mac.Interop;
@@ -14,6 +15,7 @@ namespace SpiderEye.Mac
         public event CancelableEventHandler Closing;
         public event EventHandler Closed;
         public event EventHandler Shown;
+        public event EventHandler Focused;
 
         public string Title
         {
@@ -347,6 +349,7 @@ namespace SpiderEye.Mac
                     if (instance != null && CheckCanBecomeKey(instance))
                     {
                         instance.SetMenu();
+                        instance.Focused?.Invoke(instance, EventArgs.Empty);
                     }
                 });
 

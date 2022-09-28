@@ -11,6 +11,12 @@ namespace SpiderEye.Windows
 {
     internal class WinFormsWindow : Form, IWindow
     {
+        event EventHandler IWindow.Focused
+        {
+            add { Activated += value; }
+            remove { Activated -= value; }
+        }
+
         event CancelableEventHandler IWindow.Closing
         {
             add { ClosingBackingEvent += value; }

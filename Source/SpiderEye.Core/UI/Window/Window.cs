@@ -31,6 +31,21 @@ namespace SpiderEye
         public event EventHandler Closed;
 
         /// <summary>
+        /// Fires after the window got focused.
+        /// </summary>
+        public event EventHandler Focused
+        {
+            add
+            {
+                NativeWindow.Focused += value;
+            }
+            remove
+            {
+                NativeWindow.Focused -= value;
+            }
+        }
+
+        /// <summary>
         /// Gets or sets the window title.
         /// </summary>
         public string Title
