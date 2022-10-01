@@ -23,6 +23,11 @@ namespace SpiderEye
         event EventHandler Closed;
 
         /// <summary>
+        /// Fires after the window got focused.
+        /// </summary>
+        event EventHandler Focused;
+
+        /// <summary>
         /// Gets or sets the window title.
         /// </summary>
         string Title { get; set; }

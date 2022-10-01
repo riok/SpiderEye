@@ -11,6 +11,7 @@ namespace SpiderEye.Linux
         public event CancelableEventHandler Closing;
         public event EventHandler Closed;
         public event EventHandler Shown;
+        public event EventHandler Focused;
 
         public string Title
         {
@@ -134,6 +135,7 @@ namespace SpiderEye.Linux
         private readonly WidgetCallbackDelegate showDelegate;
         private readonly DeleteCallbackDelegate deleteDelegate;
         private readonly WidgetCallbackDelegate destroyDelegate;
+        private readonly WidgetCallbackDelegate focusInDelegate;
 
         private readonly IntPtr menuBarHandle;
         private readonly IntPtr accelGroup;
@@ -185,10 +187,12 @@ namespace SpiderEye.Linux
             showDelegate = ShowCallback;
             deleteDelegate = DeleteCallback;
             destroyDelegate = DestroyCallback;
+            focusInDelegate = FocusInCallback;
 
             GLib.ConnectSignal(Handle, "show", showDelegate, IntPtr.Zero);
             GLib.ConnectSignal(Handle, "delete-event", deleteDelegate, IntPtr.Zero);
             GLib.ConnectSignal(Handle, "destroy", destroyDelegate, IntPtr.Zero);
+            GLib.ConnectSignal(Handle, "focus-in-event", focusInDelegate, IntPtr.Zero);
 
             webview.CloseRequested += Webview_CloseRequested;
             webview.TitleChanged += Webview_TitleChanged;
@@ -321,6 +325,11 @@ namespace SpiderEye.Linux
             bridge.TitleChanged -= Webview_TitleChanged;
 
             Closed?.Invoke(this, EventArgs.Empty);
+        }
+
+        private void FocusInCallback(IntPtr widget, IntPtr userdata)
+        {
+            Focused?.Invoke(this, EventArgs.Empty);
         }
 
         private void Webview_TitleChanged(object sender, string title)
