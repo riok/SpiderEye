@@ -108,10 +108,9 @@ namespace SpiderEye.Mac
             ObjC.Call(Handle, "loadRequest:", request);
         }
 
-        public Task<string> ExecuteScriptAsync(string script)
+        public async Task<string> ExecuteScriptAsync(string script)
         {
             var taskResult = new TaskCompletionSource<string>();
-            NSBlock block = null;
 
             ScriptEvalCallbackDelegate callback = (IntPtr self, IntPtr result, IntPtr error) =>
             {
@@ -129,17 +128,15 @@ namespace SpiderEye.Mac
                     }
                 }
                 catch (Exception ex) { taskResult.TrySetException(ex); }
-                finally { block.Dispose(); }
             };
 
-            block = new NSBlock(callback);
+            using var block = new NSBlock(callback);
             ObjC.Call(
                 Handle,
                 "evaluateJavaScript:completionHandler:",
                 NSString.Create(script),
                 block.Handle);
-
-            return taskResult.Task;
+            return await taskResult.Task;
         }
 
         public Uri RegisterLocalDirectoryMapping(string directory)
