@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -39,11 +38,13 @@ namespace SpiderEye.Linux
         private const string DirectoryMappingPrefix = $"/{CustomScheme}-directory-mapping-";
         private const int UriCallbackFileNotFound = 4;
         private const int UriCallbackUnspecifiedError = 24;
+        private static readonly WebKitUriSchemeRequestDelegate UriSchemeCallbackDelegate;
+        private static readonly Dictionary<string, string> SchemeToLocalDirectoryMapping = new();
+        private static readonly Uri CustomHost;
         private readonly WebviewBridge bridge;
         private readonly IntPtr manager;
         private readonly IntPtr settings;
         private readonly IntPtr inspector;
-        private readonly Uri customHost;
 
         private readonly ScriptDelegate scriptDelegate;
         private readonly PageLoadFailedDelegate loadFailedDelegate;
@@ -51,12 +52,22 @@ namespace SpiderEye.Linux
         private readonly ContextMenuRequestDelegate contextMenuDelegate;
         private readonly WebviewDelegate closeDelegate;
         private readonly WebviewDelegate titleChangeDelegate;
-        private readonly WebKitUriSchemeRequestDelegate uriSchemeCallback;
-        private readonly Dictionary<string, string> schemeToLocalDirectoryMapping = new();
         private readonly GAsyncReadyDelegate scriptExecuteCallback;
 
-        private bool loadEventHandled = false;
+        private bool loadEventHandled;
         private bool enableDevToolsField;
+
+        static GtkWebview()
+        {
+            // need to keep the delegate around or it will get garbage collected
+            UriSchemeCallbackDelegate = UriSchemeCallback;
+
+            CustomHost = UriTools.GetRandomResourceUrl(CustomScheme);
+
+            IntPtr context = WebKit.Context.GetDefault();
+            using GLibString gscheme = CustomScheme;
+            WebKit.Context.RegisterUriScheme(context, gscheme, UriSchemeCallbackDelegate, IntPtr.Zero, IntPtr.Zero);
+        }
 
         public GtkWebview(WebviewBridge bridge)
         {
@@ -69,7 +80,6 @@ namespace SpiderEye.Linux
             contextMenuDelegate = ContextMenuCallback;
             closeDelegate = CloseCallback;
             titleChangeDelegate = TitleChangeCallback;
-            uriSchemeCallback = UriSchemeCallback;
             scriptExecuteCallback = ScriptExecuteCallback;
 
             manager = WebKit.Manager.Create();
@@ -96,14 +106,6 @@ namespace SpiderEye.Linux
             GLib.ConnectSignal(Handle, "context-menu", contextMenuDelegate, IntPtr.Zero);
             GLib.ConnectSignal(Handle, "close", closeDelegate, IntPtr.Zero);
             GLib.ConnectSignal(Handle, "notify::title", titleChangeDelegate, IntPtr.Zero);
-
-            customHost = UriTools.GetRandomResourceUrl(CustomScheme);
-
-            IntPtr context = WebKit.Context.Get(Handle);
-            using (GLibString gscheme = CustomScheme)
-            {
-                WebKit.Context.RegisterUriScheme(context, gscheme, uriSchemeCallback, IntPtr.Zero, IntPtr.Zero);
-            }
         }
 
         public Uri RegisterLocalDirectoryMapping(string directory)
@@ -111,9 +113,9 @@ namespace SpiderEye.Linux
             // While GTK WebView allows to register custom schemes for this scenario, we ran into CORS errors since the scheme and host differ.
             // Trying to work around the CORS issues didn't work, so we chose a different approach where we re-use our existing custom scheme.
             // We just register a custom API path. When we receive a callback on that path, return the file contents.
-            var customUrlPath = DirectoryMappingPrefix + schemeToLocalDirectoryMapping.Count;
-            schemeToLocalDirectoryMapping.Add(customUrlPath, directory);
-            return new Uri($"{customHost}{customUrlPath}/");
+            var customUrlPath = DirectoryMappingPrefix + SchemeToLocalDirectoryMapping.Count;
+            SchemeToLocalDirectoryMapping.Add(customUrlPath, directory);
+            return new Uri($"{CustomHost}{customUrlPath}/");
         }
 
         public void UpdateBackgroundColor(string color)
@@ -136,7 +138,7 @@ namespace SpiderEye.Linux
         {
             if (uri == null) { throw new ArgumentNullException(nameof(uri)); }
 
-            if (!uri.IsAbsoluteUri) { uri = new Uri(customHost, uri); }
+            if (!uri.IsAbsoluteUri) { uri = new Uri(CustomHost, uri); }
 
             using (GLibString gurl = uri.ToString())
             {
@@ -234,7 +236,7 @@ namespace SpiderEye.Linux
             }
         }
 
-        private async void UriSchemeCallback(IntPtr request, IntPtr userdata)
+        private static async void UriSchemeCallback(IntPtr request, IntPtr userdata)
         {
             try
             {
@@ -250,7 +252,7 @@ namespace SpiderEye.Linux
                 var path = uri.GetComponents(UriComponents.Path, UriFormat.Unescaped);
                 if (path.StartsWith(DirectoryMappingPrefix))
                 {
-                    foreach (var (pathPrefix, directory) in schemeToLocalDirectoryMapping)
+                    foreach (var (pathPrefix, directory) in SchemeToLocalDirectoryMapping)
                     {
                         if (path.StartsWith(pathPrefix))
                         {
@@ -351,7 +353,7 @@ namespace SpiderEye.Linux
             }
         }
 
-        private void LocalFileSchemeCallback(IntPtr request, string pathPrefix, string directory)
+        private static void LocalFileSchemeCallback(IntPtr request, string pathPrefix, string directory)
         {
             var file = IntPtr.Zero;
             var fileStream = IntPtr.Zero;
@@ -405,6 +407,13 @@ namespace SpiderEye.Linux
             }
         }
 
+        private static void FinishUriSchemeCallbackWithError(IntPtr request, int errorCode)
+        {
+            uint domain = GLib.GetFileErrorQuark();
+            var error = new GError(domain, errorCode, IntPtr.Zero);
+            WebKit.UriScheme.FinishSchemeRequestWithError(request, ref error);
+        }
+
         private bool ContextMenuCallback(IntPtr webview, IntPtr default_menu, IntPtr hit_test_result, bool triggered_with_keyboard, IntPtr arg)
         {
             // this simply prevents the default context menu from showing up
@@ -422,19 +431,12 @@ namespace SpiderEye.Linux
             TitleChanged?.Invoke(this, title);
         }
 
-        private void FinishUriSchemeCallback(IntPtr request, IntPtr stream, long streamLength, Uri uri)
+        private static void FinishUriSchemeCallback(IntPtr request, IntPtr stream, long streamLength, Uri uri)
         {
             using (GLibString mimetype = Application.ContentProvider.GetMimeType(uri))
             {
                 WebKit.UriScheme.FinishSchemeRequest(request, stream, streamLength, mimetype);
             }
-        }
-
-        private void FinishUriSchemeCallbackWithError(IntPtr request, int errorCode)
-        {
-            uint domain = GLib.GetFileErrorQuark();
-            var error = new GError(domain, errorCode, IntPtr.Zero);
-            WebKit.UriScheme.FinishSchemeRequestWithError(request, ref error);
         }
 
         private sealed class ScriptExecuteState
