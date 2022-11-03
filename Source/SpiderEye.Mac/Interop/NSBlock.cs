@@ -34,13 +34,12 @@ namespace SpiderEye.Mac.Interop
             Handle = (IntPtr)blp;
         }
 
-        public unsafe void Dispose()
+        public void Dispose()
         {
-            var blp = (BlockLiteral*)Handle;
-
-            CallbackHandle.Free();
-            Marshal.FreeHGlobal((IntPtr)blp->Descriptor);
+            // If we are investigating memory leaks, this could be a possible cause.
+            // We do not free the BlockDescriptor (Handle->Descriptor) here because it leads to crashes.
             Marshal.FreeHGlobal(Handle);
+            CallbackHandle.Free();
         }
 
         [StructLayout(LayoutKind.Sequential)]
