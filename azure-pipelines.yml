@@ -7,7 +7,7 @@ jobs:
     strategy:
       matrix:
         linux-x64:
-          imageName: 'ubuntu-18.04'
+          imageName: 'ubuntu-20.04'
           rid: 'linux-x64'
         mac-x64:
           imageName: 'macos-11'
@@ -46,7 +46,7 @@ jobs:
   - job: 'CombinePackages'
     dependsOn: 'BuildPackage'
     pool:
-      vmImage: 'ubuntu-18.04'
+      vmImage: 'ubuntu-20.04'
     steps:
       - task: DownloadBuildArtifacts@0
         inputs:
@@ -78,7 +78,7 @@ jobs:
           publishLocation: 'Container'
   - job: 'BuildCore'
     pool:
-      vmImage: 'ubuntu-18.04'
+      vmImage: 'ubuntu-20.04'
     steps:
       - task: UseDotNet@2
         displayName: 'Use .NET Core sdk'
