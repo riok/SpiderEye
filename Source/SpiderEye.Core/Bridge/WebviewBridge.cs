@@ -215,7 +215,7 @@ namespace SpiderEye.Bridge
                     return new ApiResultModel
                     {
                         Success = true,
-                        Value = info.HasReturnValue ? JsonConverter.Serialize(result) : null,
+                        Value = info.HasReturnValue ? result : null,
                     };
                 }
                 catch (TargetInvocationException tex) { return Application.ErrorMapper.MapErrorToApiResult(tex.InnerException ?? tex); }
