@@ -400,23 +400,24 @@ namespace SpiderEye.Mac
 
         private UIntPtr GetStyleMask()
         {
-            var style = NSWindowStyleMask.Titled;
+            var currentStyleMask = (int)ObjC.Call(Handle, "styleMask");
+            currentStyleMask |= (int)NSWindowStyleMask.Titled;
             if (canResizeField)
             {
-                style |= NSWindowStyleMask.Resizable;
+                currentStyleMask |= (int)NSWindowStyleMask.Resizable;
             }
 
             if (canCloseField)
             {
-                style |= NSWindowStyleMask.Closable;
+                currentStyleMask |= (int)NSWindowStyleMask.Closable;
             }
 
             if (canMinimizeField)
             {
-                style |= NSWindowStyleMask.Miniaturizable;
+                currentStyleMask |= (int)NSWindowStyleMask.Miniaturizable;
             }
 
-            return new UIntPtr((uint)style);
+            return new UIntPtr((uint)currentStyleMask);
         }
 
         private void UpdateStyleMask()
