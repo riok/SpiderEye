@@ -11,22 +11,6 @@ namespace SpiderEye.Windows
 
         public SynchronizationContext SynchronizationContext { get; }
 
-        public ContentServer ContentServer
-        {
-            get
-            {
-                if (server == null)
-                {
-                    server = new ContentServer();
-                    server.Start();
-                }
-
-                return server;
-            }
-        }
-
-        private ContentServer server;
-
         public WinFormsApplication()
         {
             App.EnableVisualStyles();
@@ -47,7 +31,6 @@ namespace SpiderEye.Windows
         public void Exit()
         {
             App.Exit();
-            server?.Dispose();
         }
 
         private void Application_AllWindowsClosed(object sender, EventArgs e)

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
+using System.Reflection;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Microsoft.Web.WebView2.Core;
@@ -11,7 +12,7 @@ using SpiderEye.Tools;
 
 namespace SpiderEye.Windows
 {
-    internal class WinFormsWebview : IWebview, IWinFormsWebview
+    internal class WinFormsWebview : IWinFormsWebview
     {
         public event NavigatingEventHandler Navigating;
 
@@ -37,7 +38,8 @@ namespace SpiderEye.Windows
 
         // Note: We currently can't use a custom scheme, since the WebView2 doesn't support it yet
         private const string CustomScheme = "http";
-        private const string WebView2UserDataFolder = "SpiderEyeWebView2";
+        private const string UserDataFolderFallbackApplicationName = "SpiderEye";
+        private const string UserDataFolderName = "WebView2";
         private readonly WebviewBridge bridge;
         private readonly Uri customHost;
         private WebView2 webview;
@@ -111,8 +113,7 @@ namespace SpiderEye.Windows
 
         private async void InitializeWebView()
         {
-            var tempFolder = Path.GetTempPath();
-            var webView2UserDataFolder = Path.Combine(tempFolder, WebView2UserDataFolder);
+            var webView2UserDataFolder = GetUserDataFolder();
 
             try
             {
@@ -193,6 +194,15 @@ namespace SpiderEye.Windows
         private void RegisterLocalDirectoryMapping(Uri host, string directory)
         {
             webview.CoreWebView2.SetVirtualHostNameToFolderMapping(host.GetComponents(UriComponents.Host, UriFormat.Unescaped), directory, CoreWebView2HostResourceAccessKind.Allow);
+        }
+
+        private string GetUserDataFolder()
+        {
+            // The user data folder should not be in the temp directory, as there may be problems with the cache
+            // It can result in net::ERR_CACHE_READ_FAILURE errors in the WebView
+            var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            var applicationName = Assembly.GetEntryAssembly()?.GetName().Name ?? UserDataFolderFallbackApplicationName;
+            return Path.Combine(localAppData, $"{applicationName}.{UserDataFolderName}");
         }
     }
 }

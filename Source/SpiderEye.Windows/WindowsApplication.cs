@@ -5,11 +5,6 @@
     /// </summary>
     public static class WindowsApplication
     {
-        internal static string ContentServerAddress
-        {
-            get { return app.ContentServer.HostAddress; }
-        }
-
         private static WinFormsApplication app;
 
         /// <summary>
