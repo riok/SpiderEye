@@ -11,6 +11,8 @@ namespace SpiderEye.Windows
 {
     internal class WinFormsWindow : Form, IWindow
     {
+        private const double LogicalDpi = 96D;
+
         event EventHandler IWindow.Focused
         {
             add { Activated += value; }
@@ -36,20 +38,22 @@ namespace SpiderEye.Windows
 
         Size IWindow.Size
         {
-            get { return new Size(Size.Width, Size.Height); }
-            set { Size = new SDSize((int)value.Width, (int)value.Height); }
+            get { return ToLogicalUnits(new Size(Size.Width, Size.Height)); }
+            set { Size = ToDeviceUnits(new SDSize((int)value.Width, (int)value.Height)); }
         }
 
+        // Check with .NET 8 whether manual scaling is still needed
         public Size MinSize
         {
-            get { return new Size(MinimumSize.Width, MinimumSize.Height); }
-            set { MinimumSize = new SDSize((int)value.Width, (int)value.Height); }
+            get { return ToLogicalUnits(new Size(MinimumSize.Width, MinimumSize.Height)); }
+            set { MinimumSize = ToDeviceUnits(new SDSize((int)value.Width, (int)value.Height)); }
         }
 
+        // Check with .NET 8 whether manual scaling is still needed
         public Size MaxSize
         {
-            get { return new Size(MaximumSize.Width, MaximumSize.Height); }
-            set { MaximumSize = new SDSize((int)value.Width, (int)value.Height); }
+            get { return ToLogicalUnits(new Size(MaximumSize.Width, MaximumSize.Height)); }
+            set { MaximumSize = ToDeviceUnits(new SDSize((int)value.Width, (int)value.Height)); }
         }
 
         public bool CanResize
@@ -191,8 +195,8 @@ namespace SpiderEye.Windows
 
         protected override void Dispose(bool disposing)
         {
-            base.Dispose(disposing);
             webview.Dispose();
+            base.Dispose(disposing);
         }
 
         private void SetMenu(Menu menu)
@@ -278,6 +282,22 @@ namespace SpiderEye.Windows
                     AddShortcutItems(dropdownItem);
                 }
             }
+        }
+
+        private SDSize ToDeviceUnits(SDSize logicalSize)
+        {
+            var logicalToDeviceUnitsScalingFactor = DeviceDpi / LogicalDpi;
+            var scaledWidth = (int)Math.Round(logicalSize.Width * logicalToDeviceUnitsScalingFactor);
+            var scaledHeight = (int)Math.Round(logicalSize.Height * logicalToDeviceUnitsScalingFactor);
+            return new SDSize(scaledWidth, scaledHeight);
+        }
+
+        private Size ToLogicalUnits(Size deviceSize)
+        {
+            var deviceToLogicalUnitsScalingFactor = LogicalDpi / DeviceDpi;
+            var scaledWidth = (int)Math.Round(deviceSize.Width * deviceToLogicalUnitsScalingFactor);
+            var scaledHeight = (int)Math.Round(deviceSize.Height * deviceToLogicalUnitsScalingFactor);
+            return new Size(scaledWidth, scaledHeight);
         }
     }
 }
