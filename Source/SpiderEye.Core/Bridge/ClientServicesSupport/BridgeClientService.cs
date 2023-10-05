@@ -31,8 +31,9 @@ namespace SpiderEye.Bridge.ClientServicesSupport
         protected override object Invoke(MethodInfo targetMethod, object[] args)
         {
             var arg = args?.FirstOrDefault();
-            var callMode = GetCallMode(targetMethod);
-            string callId = namePrefix + (targetMethod.GetCustomAttribute<BridgeClientMethodAttribute>()?.Name ?? targetMethod.Name);
+            var clientMethodAttribute = GetClientMethodAttribute(targetMethod);
+            var callMode = GetCallMode(clientMethodAttribute);
+            string callId = namePrefix + (clientMethodAttribute?.Name ?? targetMethod.Name);
 
             switch (callMode)
             {
@@ -81,7 +82,8 @@ namespace SpiderEye.Bridge.ClientServicesSupport
 
         private void CheckNumberOfParams(MethodInfo method)
         {
-            var callMode = GetCallMode(method);
+            var clientMethodAttribute = GetClientMethodAttribute(method);
+            var callMode = GetCallMode(clientMethodAttribute);
             int expectedMinParams = callMode == BridgeClientServiceCallMode.SingleWindow ? 1 : 0;
             int expectedMaxParams = expectedMinParams + 1;
             int paramsCount = method.GetParameters().Length;
@@ -95,9 +97,14 @@ namespace SpiderEye.Bridge.ClientServicesSupport
             }
         }
 
-        private BridgeClientServiceCallMode GetCallMode(MethodInfo method)
+        private BridgeClientServiceCallMode GetCallMode(BridgeClientMethodAttribute clientMethodAttribute)
         {
-            return method.GetCustomAttribute<BridgeClientMethodAttribute>()?.CallMode ?? BridgeClientServiceCallMode.MainWindow;
+            return clientMethodAttribute?.CallMode ?? BridgeClientServiceCallMode.MainWindow;
+        }
+
+        private BridgeClientMethodAttribute GetClientMethodAttribute(MethodInfo method)
+        {
+            return method.GetCustomAttribute<BridgeClientMethodAttribute>();
         }
     }
 }

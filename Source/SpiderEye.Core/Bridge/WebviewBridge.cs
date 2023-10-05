@@ -11,6 +11,7 @@ namespace SpiderEye.Bridge
     internal class WebviewBridge : IWebviewBridge
     {
         public event EventHandler<string> TitleChanged;
+        public event EventHandler<string> MissingClientImplementationDetected;
 
         private IWebview Webview
         {
@@ -154,7 +155,8 @@ namespace SpiderEye.Bridge
 
             if (result.NoSubscriber)
             {
-                throw new MissingEventException(id);
+                MissingClientImplementationDetected?.Invoke(this, id);
+                return result;
             }
 
             if (result.Success)
