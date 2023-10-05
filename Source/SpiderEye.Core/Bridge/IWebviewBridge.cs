@@ -9,6 +9,11 @@ namespace SpiderEye.Bridge
     public interface IWebviewBridge
     {
         /// <summary>
+        /// Event that is emitted whenever a missing client implementation was detected.
+        /// </summary>
+        event EventHandler<string> MissingClientImplementationDetected;
+
+        /// <summary>
         /// Gets a value indicating whether dependency injection is enabled for the bridge.
         /// If this is true, bridge calls run in a scoped DI lifetime.
         /// </summary>
