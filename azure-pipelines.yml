@@ -20,7 +20,10 @@ jobs:
           rid: 'osx-arm64'
         windows-x64:
           rid: 'win-x64'
-          imageName: 'windows-2019'
+          imageName: 'windows-2022'
+        windows-arm64:
+          rid: 'win-arm64'
+          imageName: 'windows-2022'
 
     pool:
       vmImage: $(imageName)
@@ -55,6 +58,10 @@ jobs:
         inputs:
           downloadPath: 'artifacts'
           artifactName: 'artifacts-win-x64'
+      - task: DownloadBuildArtifacts@0
+        inputs:
+          downloadPath: 'artifacts'
+          artifactName: 'artifacts-win-arm64'
       - task: DownloadBuildArtifacts@0
         inputs:
           downloadPath: 'artifacts'
