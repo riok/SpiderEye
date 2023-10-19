@@ -146,6 +146,7 @@ namespace SpiderEye.Linux
         private string backgroundColorField;
         private AppIcon iconField;
         private Menu menu;
+        private string autosaveName = null;
 
         public GtkWindow(WebviewBridge bridge)
         {
@@ -244,6 +245,38 @@ namespace SpiderEye.Linux
             }
         }
 
+        public void RestoreAndAutoSavePosition(string name, Size defaultSize)
+        {
+            if (autosaveName != null)
+            {
+                // Save information from previous name
+                SaveWindowInformation();
+            }
+
+            autosaveName = name;
+
+            if (Application.WindowInfoStorage == null)
+            {
+                throw new InvalidOperationException("Cannot auto save position without a window information storage.");
+            }
+
+            var savedInfo = Application.WindowInfoStorage.LoadWindowInformation(name);
+            if (savedInfo == null)
+            {
+                Gtk.Window.SetPosition(Handle, GtkWindowPosition.Center);
+                ((IWindow)this).Size = defaultSize;
+                return;
+            }
+
+            // It's not easy to change the position at this point
+            // Checking the bounds is also not easy, so we currently skip this part
+            Size = new Size(savedInfo.Bounds.Width, savedInfo.Bounds.Height);
+            if (savedInfo.Maximised)
+            {
+                SetWindowState(WindowState.Maximized);
+            }
+        }
+
         public void Dispose()
         {
             if (!disposed)
@@ -313,6 +346,8 @@ namespace SpiderEye.Linux
 
         private bool DeleteCallback(IntPtr widget, IntPtr eventData, IntPtr userdata)
         {
+            SaveWindowInformation();
+
             var args = new CancelableEventArgs();
             Closing?.Invoke(this, args);
 
@@ -405,6 +440,30 @@ namespace SpiderEye.Linux
             }
 
             GLib.FreeList(existingMenuList);
+        }
+
+        private void SaveWindowInformation()
+        {
+            if (autosaveName == null || Application.WindowInfoStorage == null)
+            {
+                return;
+            }
+
+            var size = Size;
+            Gtk.Window.GetPosition(Handle, out var x, out var y);
+
+            var windowInformation = new WindowInformation
+            {
+                Maximised = Gtk.Window.IsMaximized(Handle),
+                Bounds = new Rectangle
+                {
+                    X = x,
+                    Y = y,
+                    Height = (int)size.Height,
+                    Width = (int)size.Width,
+                },
+            };
+            Application.WindowInfoStorage.StoreWindowInformation(autosaveName, windowInformation);
         }
     }
 }

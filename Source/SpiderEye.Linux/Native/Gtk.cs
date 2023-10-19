@@ -76,6 +76,9 @@ namespace SpiderEye.Linux.Native
             [DllImport(GtkNativeDll, EntryPoint = "gtk_window_set_type_hint", CallingConvention = CallingConvention.Cdecl)]
             public static extern void SetTypeHint(IntPtr window, GdkWindowTypeHint hint);
 
+            [DllImport(GtkNativeDll, EntryPoint = "gtk_window_get_position", CallingConvention = CallingConvention.Cdecl)]
+            public static extern void GetPosition(IntPtr window, out int root_x, out int root_y);
+
             [DllImport(GtkNativeDll, EntryPoint = "gtk_window_set_position", CallingConvention = CallingConvention.Cdecl)]
             public static extern void SetPosition(IntPtr window, GtkWindowPosition position);
 

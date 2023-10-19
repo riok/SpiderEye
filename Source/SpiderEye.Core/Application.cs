@@ -64,6 +64,11 @@ namespace SpiderEye
         public static ErrorMapper ErrorMapper { get; set; }
 
         /// <summary>
+        /// Gets or sets the storage to save window information (size, position).
+        /// </summary>
+        public static IWindowStorage WindowInfoStorage { get; set; }
+
+        /// <summary>
         /// Gets the UI factory.
         /// </summary>
         internal static IUiFactory Factory

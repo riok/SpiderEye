@@ -258,6 +258,16 @@ namespace SpiderEye
             return NativeWindow.Webview.RegisterLocalDirectoryMapping(directory);
         }
 
+        /// <summary>
+        /// Restores the last remembered size and position of the window.
+        /// </summary>
+        /// <param name="name">The name associated with this window.</param>
+        /// <param name="defaultSize">The default size if this window is shown for the first time.</param>
+        public void RestoreAndAutoSavePosition(string name, Size defaultSize)
+        {
+            NativeWindow.RestoreAndAutoSavePosition(name, defaultSize);
+        }
+
         /// <inheritdoc />
         public void Dispose()
         {
