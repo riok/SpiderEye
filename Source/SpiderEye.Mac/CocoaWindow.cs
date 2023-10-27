@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using SpiderEye.Bridge;
 using SpiderEye.Mac.Interop;
@@ -260,7 +259,6 @@ namespace SpiderEye.Mac
 
         public void Show()
         {
-            ObjC.Call(Handle, "center");
             Focus();
             MacApplication.SynchronizationContext.Post(s => Shown?.Invoke(this, EventArgs.Empty), null);
         }
@@ -302,6 +300,20 @@ namespace SpiderEye.Mac
                 default:
                     throw new ArgumentException($"Invalid window state of \"{state}\"", nameof(state));
             }
+        }
+
+        public void RestoreAndAutoSavePosition(string name, Size defaultSize)
+        {
+            // Unset the autosave name so that we do not overwrite anything of the current autosave name (if one exists)
+            ObjC.Call(Handle, "setFrameAutosaveName:", NSString.Create(string.Empty));
+
+            if (ObjC.Call(Handle, "setFrameUsingName:", NSString.Create(name)) == IntPtr.Zero)
+            {
+                // Couldn't set frame by name, probably no saved state for the window name -> set default size
+                Size = defaultSize;
+            }
+
+            ObjC.Call(Handle, "setFrameAutosaveName:", NSString.Create(name));
         }
 
         public void Dispose()

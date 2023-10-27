@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
+using System.Linq;
 using System.Windows.Forms;
 using SpiderEye.Bridge;
 using SpiderEye.Tools;
@@ -27,6 +28,7 @@ namespace SpiderEye.Windows
 
         private bool hasExistingMenu;
         private Menu menu;
+        private string autosaveName = null;
         private readonly List<ToolStripMenuItem> shortcutItems = new List<ToolStripMenuItem>();
         private event CancelableEventHandler ClosingBackingEvent;
 
@@ -172,6 +174,51 @@ namespace SpiderEye.Windows
             }
         }
 
+        public void RestoreAndAutoSavePosition(string name, Size defaultSize)
+        {
+            if (autosaveName != null)
+            {
+                // Save information from previous name
+                SaveWindowInformation();
+            }
+
+            autosaveName = name;
+
+            if (Application.WindowInfoStorage == null)
+            {
+                throw new InvalidOperationException("Cannot auto save position without a window information storage.");
+            }
+
+            var savedInfo = Application.WindowInfoStorage.LoadWindowInformation(name);
+            if (savedInfo == null)
+            {
+                StartPosition = FormStartPosition.CenterScreen;
+                ((IWindow)this).Size = defaultSize;
+                return;
+            }
+
+            var rect = new System.Drawing.Rectangle(
+                savedInfo.Bounds.X,
+                savedInfo.Bounds.Y,
+                savedInfo.Bounds.Width,
+                savedInfo.Bounds.Height);
+            if (!Screen.AllScreens.Any(s => s.WorkingArea.IntersectsWith(rect)))
+            {
+                // Window would be out of bounds, fall back to the default size
+                StartPosition = FormStartPosition.CenterScreen;
+                ((IWindow)this).Size = defaultSize;
+                return;
+            }
+
+            StartPosition = FormStartPosition.Manual;
+            SetDesktopBounds(savedInfo.Bounds.X, savedInfo.Bounds.Y, savedInfo.Bounds.Width, savedInfo.Bounds.Height);
+
+            if (savedInfo.Maximised)
+            {
+                WindowState = FormWindowState.Maximized;
+            }
+        }
+
         public void SetIcon(AppIcon icon)
         {
             this.icon = icon;
@@ -186,6 +233,8 @@ namespace SpiderEye.Windows
 
         protected override void OnClosing(CancelEventArgs e)
         {
+            SaveWindowInformation();
+
             var args = new CancelableEventArgs();
             ClosingBackingEvent?.Invoke(this, args);
             e.Cancel = args.Cancel;
@@ -298,6 +347,32 @@ namespace SpiderEye.Windows
             var scaledWidth = (int)Math.Round(deviceSize.Width * deviceToLogicalUnitsScalingFactor);
             var scaledHeight = (int)Math.Round(deviceSize.Height * deviceToLogicalUnitsScalingFactor);
             return new Size(scaledWidth, scaledHeight);
+        }
+
+        private void SaveWindowInformation()
+        {
+            if (autosaveName == null || Application.WindowInfoStorage == null)
+            {
+                return;
+            }
+
+            // When the window is minimized/maximised, take the bounds as if it was in a normal window state
+            var bounds = WindowState == FormWindowState.Normal
+                ? DesktopBounds
+                : RestoreBounds;
+
+            var windowInformation = new WindowInformation
+            {
+                Maximised = WindowState == FormWindowState.Maximized,
+                Bounds = new Rectangle
+                {
+                    X = bounds.X,
+                    Y = bounds.Y,
+                    Height = bounds.Height,
+                    Width = bounds.Width,
+                },
+            };
+            Application.WindowInfoStorage.StoreWindowInformation(autosaveName, windowInformation);
         }
     }
 }
