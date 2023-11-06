@@ -10,6 +10,7 @@ namespace SpiderEye.Mac
     {
         private static CocoaWindow modalWindow;
         private bool canResizeBeforeModal;
+        private bool restoredPosition;
 
         public event CancelableEventHandler Closing;
         public event EventHandler Closed;
@@ -259,6 +260,13 @@ namespace SpiderEye.Mac
 
         public void Show()
         {
+            // If we didn't restore the window position from the settings, we need to center the window
+            // Otherwise, it appears in the lower left corner
+            if (!restoredPosition)
+            {
+                ObjC.Call(Handle, "center");
+            }
+
             Focus();
             MacApplication.SynchronizationContext.Post(s => Shown?.Invoke(this, EventArgs.Empty), null);
         }
@@ -307,7 +315,8 @@ namespace SpiderEye.Mac
             // Unset the autosave name so that we do not overwrite anything of the current autosave name (if one exists)
             ObjC.Call(Handle, "setFrameAutosaveName:", NSString.Create(string.Empty));
 
-            if (ObjC.Call(Handle, "setFrameUsingName:", NSString.Create(name)) == IntPtr.Zero)
+            restoredPosition = ObjC.Call(Handle, "setFrameUsingName:", NSString.Create(name)) != IntPtr.Zero;
+            if (!restoredPosition)
             {
                 // Couldn't set frame by name, probably no saved state for the window name -> set default size
                 Size = defaultSize;
