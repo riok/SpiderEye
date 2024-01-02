@@ -1,12 +1,16 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using System.Threading;
+using SpiderEye.Mac.Interop;
 using SpiderEye.Mac.Native;
 
 namespace SpiderEye.Mac
 {
     internal sealed class CocoaSynchronizationContext : SynchronizationContext
     {
+        // We need to keep a reference to this statically, otherwise it may be garbage collected
+        private static readonly DispatchDelegate DispatchDelegate = InvokeCallback;
+
         public bool IsMainThread
         {
             get { return Thread.CurrentThread.ManagedThreadId == mainThreadId; }
@@ -35,7 +39,7 @@ namespace SpiderEye.Mac
 
             var data = new InvokeState(d, state);
             var handle = GCHandle.Alloc(data, GCHandleType.Normal);
-            Dispatch.AsyncFunction(Dispatch.MainQueue, GCHandle.ToIntPtr(handle), InvokeCallback);
+            Dispatch.AsyncFunction(Dispatch.MainQueue, GCHandle.ToIntPtr(handle), DispatchDelegate);
         }
 
         public override void Send(SendOrPostCallback d, object state)
@@ -47,7 +51,7 @@ namespace SpiderEye.Mac
             {
                 var data = new InvokeState(d, state);
                 var handle = GCHandle.Alloc(data, GCHandleType.Normal);
-                Dispatch.SyncFunction(Dispatch.MainQueue, GCHandle.ToIntPtr(handle), InvokeCallback);
+                Dispatch.SyncFunction(Dispatch.MainQueue, GCHandle.ToIntPtr(handle), DispatchDelegate);
             }
         }
 
