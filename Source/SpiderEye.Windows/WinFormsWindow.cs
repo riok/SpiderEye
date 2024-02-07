@@ -12,7 +12,9 @@ namespace SpiderEye.Windows
 {
     internal class WinFormsWindow : Form, IWindow
     {
-        private const double LogicalDpi = 96D;
+        private const float LogicalDpi = 96;
+        private bool _shown;
+        private Action _onShown;
 
         event EventHandler IWindow.Focused
         {
@@ -44,14 +46,12 @@ namespace SpiderEye.Windows
             set { Size = ToDeviceUnits(new SDSize((int)value.Width, (int)value.Height)); }
         }
 
-        // Check with .NET 8 whether manual scaling is still needed
         public Size MinSize
         {
             get { return ToLogicalUnits(new Size(MinimumSize.Width, MinimumSize.Height)); }
             set { MinimumSize = ToDeviceUnits(new SDSize((int)value.Width, (int)value.Height)); }
         }
 
-        // Check with .NET 8 whether manual scaling is still needed
         public Size MaxSize
         {
             get { return ToLogicalUnits(new Size(MaximumSize.Width, MaximumSize.Height)); }
@@ -127,6 +127,9 @@ namespace SpiderEye.Windows
         public WinFormsWindow(WebviewBridge bridge)
         {
             if (bridge == null) { throw new ArgumentNullException(nameof(bridge)); }
+
+            AutoScaleMode = AutoScaleMode.Dpi;
+            AutoScaleDimensions = new SizeF(LogicalDpi, LogicalDpi);
 
             webview = new WinFormsWebview(bridge);
             webview.Control.Location = new Point(0, 0);
@@ -211,7 +214,11 @@ namespace SpiderEye.Windows
             }
 
             StartPosition = FormStartPosition.Manual;
-            SetDesktopBounds(savedInfo.Bounds.X, savedInfo.Bounds.Y, savedInfo.Bounds.Width, savedInfo.Bounds.Height);
+            Location = new Point(savedInfo.Bounds.X, savedInfo.Bounds.Y);
+            Size = new SDSize(savedInfo.Bounds.Width, savedInfo.Bounds.Height);
+
+            // The DPI is not yet set to the correct monitor, wait until the for is shown
+            ExecuteOnShown(() => Size = new SDSize(savedInfo.Bounds.Width, savedInfo.Bounds.Height));
 
             if (savedInfo.Maximised)
             {
@@ -231,6 +238,14 @@ namespace SpiderEye.Windows
             }
         }
 
+        protected override void OnShown(EventArgs e)
+        {
+            base.OnShown(e);
+            _shown = true;
+            _onShown?.Invoke();
+            _onShown = null;
+        }
+
         protected override void OnClosing(CancelEventArgs e)
         {
             SaveWindowInformation();
@@ -246,6 +261,17 @@ namespace SpiderEye.Windows
         {
             webview.Dispose();
             base.Dispose(disposing);
+        }
+
+        // If the form has not been shown yet, wait for that.
+        // Otherwise, WinForms will scale the form with the DPI from the primary monitor.
+        // This is wrong when the form will be shown on another monitor with a different DPI setting.
+        private void ExecuteOnShown(Action action)
+        {
+            if (!_shown)
+            {
+                _onShown = action;
+            }
         }
 
         private void SetMenu(Menu menu)

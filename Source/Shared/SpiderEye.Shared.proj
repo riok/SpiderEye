@@ -3,7 +3,6 @@
   <Import Project="..\..\Shared\SpiderEye.Shared.NuGet.proj" />
 
   <PropertyGroup>
-    <LangVersion>10</LangVersion>
     <OutputType>Library</OutputType>
     <VersionPrefix>$(AssemblyVersion)</VersionPrefix>
     <PackageId>Bildstein.$(AssemblyName)</PackageId>

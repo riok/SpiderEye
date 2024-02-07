@@ -9,21 +9,27 @@ jobs:
         linux-x64:
           imageName: 'ubuntu-20.04'
           rid: 'linux-x64'
+          libName: 'Linux'
         linux-arm64:
           imageName: 'ubuntu-20.04'
           rid: 'linux-arm64'
+          libName: 'Linux'
         mac-x64:
           imageName: 'macos-11'
           rid: 'osx-x64'
+          libName: 'Mac'
         mac-arm64:
           imageName: 'macos-11'
           rid: 'osx-arm64'
+          libName: 'Mac'
         windows-x64:
           rid: 'win-x64'
           imageName: 'windows-2022'
+          libName: 'Windows'
         windows-arm64:
           rid: 'win-arm64'
           imageName: 'windows-2022'
+          libName: 'Windows'
 
     pool:
       vmImage: $(imageName)
@@ -43,7 +49,7 @@ jobs:
       - task: CmdLine@2
         displayName: 'dotnet pack SpiderEye.Native'
         inputs:
-          script: 'dotnet pack --runtime $(rid) --include-symbols --include-source -c $(buildConfiguration) Source/SpiderEye.Native/SpiderEye.Native.csproj -o ./artifacts /p:VersionPrefix=$(versionprefix) /p:VersionSuffix=$(Build.BuildNumber)'
+          script: 'dotnet pack --runtime $(rid) --include-symbols --include-source -c $(buildConfiguration) Source/SpiderEye.$(libName)/SpiderEye.$(libName).csproj -o ./artifacts /p:VersionPrefix=$(versionprefix) /p:VersionSuffix=$(Build.BuildNumber)'
       - task: PublishBuildArtifacts@1
         inputs:
           PathtoPublish: 'artifacts'

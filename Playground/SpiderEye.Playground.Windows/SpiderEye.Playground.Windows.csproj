@@ -2,8 +2,7 @@
   <Import Project="..\Shared\SpiderEye.Playground.Shared.proj" />
 
   <PropertyGroup>
-    <!-- since .NET 5, nuget packages need to target a platform version-->
-    <TargetFramework>net6.0-windows7.0</TargetFramework>
+    <TargetFramework>net8.0-windows10.0.17763.0</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <ApplicationIcon>icon.ico</ApplicationIcon>
