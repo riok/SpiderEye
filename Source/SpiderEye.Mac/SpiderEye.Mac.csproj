@@ -1,9 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <Import Project="..\Shared\SpiderEye.Shared.Platform.proj" />
+  <Import Project="..\SpiderEye.Native\SpiderEye.Native.csproj" />
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <AssemblyName>SpiderEye.Native</AssemblyName>
-    <LangVersion>10</LangVersion>
+    <RootNamespace>SpiderEye.Mac</RootNamespace>
+    <NativeProjectName>Mac</NativeProjectName>
   </PropertyGroup>
 </Project>

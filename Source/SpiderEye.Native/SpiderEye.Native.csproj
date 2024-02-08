@@ -1,41 +1,23 @@
-<Project Sdk="Microsoft.NET.Sdk">
+<Project>
     <Import Project="..\Shared\SpiderEye.Shared.proj" />
 
     <PropertyGroup>
+        <PackageId>Bildstein.SpiderEye.Native</PackageId>
         <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
-        <IsWindows Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))' == 'true'">true</IsWindows>
-        <IsMacOs Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::OSX)))' == 'true'">true</IsMacOs>
-        <IsLinux Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))' == 'true'">true</IsLinux>
-
-        <TargetFramework>net6.0</TargetFramework>
-        <TargetFramework Condition="'$(IsWindows)' == 'true'">net6.0-windows7.0</TargetFramework>
-        
-        <NativeProjectName Condition="'$(IsWindows)' == 'true'">Windows</NativeProjectName>
-        <NativeProjectName Condition="'$(IsLinux)' == 'true'">Linux</NativeProjectName>
-        <NativeProjectName Condition="'$(IsMacOs)' == 'true'">Mac</NativeProjectName>
-
         <NativeProjectTargetFileName>SpiderEye.Native.dll</NativeProjectTargetFileName>
-        <NativeProjectTargetFile>..\SpiderEye.$(NativeProjectName)\bin\$(Configuration)\$(TargetFramework)\$(NativeProjectTargetFileName)</NativeProjectTargetFile>
-        <NativeProjectPackagePath>runtimes/$(RuntimeIdentifiers)/lib/$(TargetFramework)/$(NativeProjectTargetFileName)</NativeProjectPackagePath>
     </PropertyGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\SpiderEye.Core\SpiderEye.Core.csproj" />
-        <ProjectReference PrivateAssets="all" Include="..\SpiderEye.$(NativeProjectName)\SpiderEye.$(NativeProjectName).csproj" />
     </ItemGroup>
 
-    <ItemGroup>
-        <Content Include="$(OutputPath)$(TargetFileName)">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-            <Link>$(TargetFileName)</Link>
-            <Pack>true</Pack>
-            <PackagePath>ref/$(TargetFramework)/$(TargetFileName)</PackagePath>
-        </Content>
-        <Content Include="$(NativeProjectTargetFile)">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-            <Link>$(NativeProjectTargetFileName)</Link>
-            <Pack>true</Pack>
-            <PackagePath>$(NativeProjectPackagePath)</PackagePath>
-        </Content>
-    </ItemGroup>
+    <Target Name="CopyFilesToCorrectLocation" AfterTargets="Build">
+        <ItemGroup>
+            <None Include="$(OutputPath)$(TargetFileName)">
+                <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+                <Pack>true</Pack>
+                <PackagePath>ref/$(TargetFramework)/$(TargetFileName);runtimes/$(RuntimeIdentifiers)/lib/$(TargetFramework)/$(NativeProjectTargetFileName)</PackagePath>
+            </None>
+        </ItemGroup>
+    </Target>
 </Project>

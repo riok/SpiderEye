@@ -1,16 +1,18 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <Import Project="..\Shared\SpiderEye.Shared.Platform.proj" />
+  <Import Project="..\SpiderEye.Native\SpiderEye.Native.csproj" />
 
   <PropertyGroup>
     <!-- since .NET 5, nuget packages need to target a platform version-->
-    <TargetFramework>net6.0-windows7.0</TargetFramework>
+    <TargetFramework>net8.0-windows10.0.17763.0</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
     <AssemblyName>SpiderEye.Native</AssemblyName>
     <RootNamespace>SpiderEye.Windows</RootNamespace>
+    <NativeProjectName>Windows</NativeProjectName>
   </PropertyGroup>
   
   <ItemGroup>
-    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.1823.32" />
-    <PackageReference Include="Microsoft.Windows.Compatibility" Version="6.0.0" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2277.86" />
+    <PackageReference Include="Microsoft.Windows.Compatibility" Version="8.0.1" />
   </ItemGroup>
 </Project>
