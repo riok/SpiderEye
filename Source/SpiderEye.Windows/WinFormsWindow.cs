@@ -93,7 +93,11 @@ namespace SpiderEye.Windows
             set { webview.EnableScriptInterface = value; }
         }
 
-        public bool EnableDevTools { get; set; }
+        public bool EnableDevTools
+        {
+            get => webview.EnableDevTools;
+            set => webview.EnableDevTools = value;
+        }
 
         public Menu Menu
         {

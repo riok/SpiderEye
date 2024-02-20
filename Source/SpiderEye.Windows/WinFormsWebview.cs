@@ -36,6 +36,26 @@ namespace SpiderEye.Windows
             }
         }
 
+        public bool EnableDevTools
+        {
+            get
+            {
+                return webview.CoreWebView2 == null
+                    ? initialDevToolsEnabled
+                    : webview.CoreWebView2.Settings.AreBrowserAcceleratorKeysEnabled;
+            }
+            set
+            {
+                if (webview.CoreWebView2 == null)
+                {
+                    initialDevToolsEnabled = value;
+                    return;
+                }
+
+                webview.CoreWebView2.Settings.AreBrowserAcceleratorKeysEnabled = value;
+            }
+        }
+
         // Note: We currently can't use a custom scheme, since the WebView2 doesn't support it yet
         private const string CustomScheme = "http";
         private const string UserDataFolderFallbackApplicationName = "SpiderEye";
@@ -46,6 +66,7 @@ namespace SpiderEye.Windows
         private CoreWebView2Environment webView2Environment;
         private string initialUriToLoad;
         private bool initialWebMessageEnabled;
+        private bool initialDevToolsEnabled;
         private readonly Dictionary<Uri, string> hostToDirectoryMappingsToRegister = new();
 
         public WinFormsWebview(WebviewBridge bridge)
@@ -131,6 +152,7 @@ namespace SpiderEye.Windows
         private async void WebViewInitializationCompleted(object sender, EventArgs e)
         {
             EnableScriptInterface = initialWebMessageEnabled;
+            EnableDevTools = initialDevToolsEnabled;
 
             webview.CoreWebView2.WebResourceRequested += Webview_WebResourceRequested;
             webview.CoreWebView2.AddWebResourceRequestedFilter($"{customHost}*", CoreWebView2WebResourceContext.All);
