@@ -154,6 +154,12 @@ namespace SpiderEye.Windows
             EnableScriptInterface = initialWebMessageEnabled;
             EnableDevTools = initialDevToolsEnabled;
 
+            // Disable webview features that aren't expected in a "local" application
+            webview.CoreWebView2.Settings.IsGeneralAutofillEnabled = false;
+            webview.CoreWebView2.Settings.IsPasswordAutosaveEnabled = false;
+            webview.CoreWebView2.Settings.IsStatusBarEnabled = false;
+            webview.CoreWebView2.Settings.IsSwipeNavigationEnabled = false;
+
             webview.CoreWebView2.WebResourceRequested += Webview_WebResourceRequested;
             webview.CoreWebView2.AddWebResourceRequestedFilter($"{customHost}*", CoreWebView2WebResourceContext.All);
 
