@@ -9,5 +9,6 @@ namespace SpiderEye.Mac.Interop
         Closable = 1 << 1,
         Miniaturizable = 1 << 2,
         Resizable = 1 << 3,
+        FullSizeContentView = 1 << 15,
     }
 }

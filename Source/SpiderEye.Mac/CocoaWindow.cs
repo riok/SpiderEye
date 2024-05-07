@@ -423,6 +423,7 @@ namespace SpiderEye.Mac
         {
             var currentStyleMask = (int)ObjC.Call(Handle, "styleMask");
             currentStyleMask |= (int)NSWindowStyleMask.Titled;
+            currentStyleMask |= (int)NSWindowStyleMask.FullSizeContentView;
             if (canResizeField)
             {
                 currentStyleMask |= (int)NSWindowStyleMask.Resizable;
