@@ -247,6 +247,12 @@ namespace SpiderEye.Linux
 
         public void RestoreAndAutoSavePosition(string name, Size defaultSize)
         {
+            if (name == autosaveName)
+            {
+                // The position for the name is already set
+                return;
+            }
+
             if (autosaveName != null)
             {
                 // Save information from previous name
