@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using SpiderEye.Bridge.ClientServicesSupport;
 
 namespace SpiderEye.Bridge
 {
@@ -49,8 +50,9 @@ namespace SpiderEye.Bridge
         /// </summary>
         /// <param name="id">The event ID.</param>
         /// <param name="data">Optional event data.</param>
+        /// <param name="methodMissingMethodBehavior">The behavior when the client implementation is missing.</param>
         /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
-        Task InvokeAsync(string id, object data);
+        Task InvokeAsync(string id, object data, BridgeClientMethodMissingMethodBehavior methodMissingMethodBehavior = BridgeClientMethodMissingMethodBehavior.Report);
 
         /// <summary>
         /// Asynchronously invokes an event in the webview and get the result.
@@ -58,8 +60,9 @@ namespace SpiderEye.Bridge
         /// <typeparam name="T">The result type.</typeparam>
         /// <param name="id">The event ID.</param>
         /// <param name="data">Optional event data.</param>
+        /// <param name="methodMissingMethodBehavior">The behavior when the client implementation is missing.</param>
         /// <returns>A <see cref="Task{TResult}"/> representing the result of the asynchronous operation.</returns>
-        Task<T> InvokeAsync<T>(string id, object data);
+        Task<T> InvokeAsync<T>(string id, object data, BridgeClientMethodMissingMethodBehavior methodMissingMethodBehavior = BridgeClientMethodMissingMethodBehavior.Report);
 
         /// <summary>
         /// Asynchronously invokes an event in the webview and get the result.
@@ -67,7 +70,8 @@ namespace SpiderEye.Bridge
         /// <param name="id">The event ID.</param>
         /// <param name="data">Optional event data.</param>
         /// <param name="returnType">The result type.</param>
+        /// <param name="methodMissingMethodBehavior">The behavior when the client implementation is missing.</param>
         /// <returns>A <see cref="Task{TResult}"/> representing the result of the asynchronous operation.</returns>
-        Task<object> InvokeAsync(string id, object data, Type returnType);
+        Task<object> InvokeAsync(string id, object data, Type returnType, BridgeClientMethodMissingMethodBehavior methodMissingMethodBehavior = BridgeClientMethodMissingMethodBehavior.Report);
     }
 }

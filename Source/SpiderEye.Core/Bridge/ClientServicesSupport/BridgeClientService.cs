@@ -33,6 +33,7 @@ namespace SpiderEye.Bridge.ClientServicesSupport
             var arg = args?.FirstOrDefault();
             var clientMethodAttribute = GetClientMethodAttribute(targetMethod);
             var callMode = GetCallMode(clientMethodAttribute);
+            var missingMethodBehavior = GetMissingMethodBehavior(clientMethodAttribute);
             string callId = namePrefix + (clientMethodAttribute?.Name ?? targetMethod.Name);
 
             switch (callMode)
@@ -42,7 +43,7 @@ namespace SpiderEye.Bridge.ClientServicesSupport
                     object result = null;
                     foreach (var win in windowCollection)
                     {
-                        result = win.Bridge.InvokeAsync(callId, arg, targetMethod.ReturnType);
+                        result = win.Bridge.InvokeAsync(callId, arg, targetMethod.ReturnType, missingMethodBehavior);
                     }
 
                     return result;
@@ -50,14 +51,14 @@ namespace SpiderEye.Bridge.ClientServicesSupport
 
                 case BridgeClientServiceCallMode.MainWindow:
                 {
-                    return windowCollection.MainWindow.Bridge.InvokeAsync(callId, arg, targetMethod.ReturnType);
+                    return windowCollection.MainWindow.Bridge.InvokeAsync(callId, arg, targetMethod.ReturnType, missingMethodBehavior);
                 }
 
                 case BridgeClientServiceCallMode.SingleWindow:
                 {
                     var window = args?.OfType<Window>().LastOrDefault()
                         ?? throw new ArgumentException($"if the call mode is {callMode}, the last provided argument must be the target window.");
-                    return window.Bridge.InvokeAsync(callId, arg, targetMethod.ReturnType);
+                    return window.Bridge.InvokeAsync(callId, arg, targetMethod.ReturnType, missingMethodBehavior);
                 }
 
                 default:
@@ -100,6 +101,11 @@ namespace SpiderEye.Bridge.ClientServicesSupport
         private BridgeClientServiceCallMode GetCallMode(BridgeClientMethodAttribute clientMethodAttribute)
         {
             return clientMethodAttribute?.CallMode ?? BridgeClientServiceCallMode.MainWindow;
+        }
+
+        private BridgeClientMethodMissingMethodBehavior GetMissingMethodBehavior(BridgeClientMethodAttribute clientMethodAttribute)
+        {
+            return clientMethodAttribute?.MissingMethodBehavior ?? BridgeClientMethodMissingMethodBehavior.Report;
         }
 
         private BridgeClientMethodAttribute GetClientMethodAttribute(MethodInfo method)

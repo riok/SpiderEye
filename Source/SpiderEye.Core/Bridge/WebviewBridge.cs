@@ -4,6 +4,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using SpiderEye.Bridge.Api;
+using SpiderEye.Bridge.ClientServicesSupport;
 using SpiderEye.Bridge.Models;
 
 namespace SpiderEye.Bridge
@@ -81,24 +82,25 @@ namespace SpiderEye.Bridge
             AddApiObject(typeof(T), true);
         }
 
-        Task IWebviewBridge.InvokeAsync(string id, object data) => InvokeAsync(id, data);
+        Task IWebviewBridge.InvokeAsync(string id, object data, BridgeClientMethodMissingMethodBehavior methodMissingMethodBehavior = BridgeClientMethodMissingMethodBehavior.Report)
+            => InvokeAsync(id, data, methodMissingMethodBehavior);
 
-        public async Task<EventResultModel> InvokeAsync(string id, object data)
+        public async Task<EventResultModel> InvokeAsync(string id, object data, BridgeClientMethodMissingMethodBehavior methodMissingMethodBehavior = BridgeClientMethodMissingMethodBehavior.Report)
         {
             string script = GetInvokeScript(id, data);
             string resultJson = await Application.Invoke(() => Webview.ExecuteScriptAsync(script));
-            return ResolveEventResult(id, resultJson);
+            return ResolveEventResult(id, resultJson, methodMissingMethodBehavior);
         }
 
-        public async Task<T> InvokeAsync<T>(string id, object data)
+        public async Task<T> InvokeAsync<T>(string id, object data, BridgeClientMethodMissingMethodBehavior methodMissingMethodBehavior = BridgeClientMethodMissingMethodBehavior.Report)
         {
-            var result = await InvokeAsync(id, data);
+            var result = await InvokeAsync(id, data, methodMissingMethodBehavior);
             return ResolveInvokeResult<T>(result);
         }
 
-        public async Task<object> InvokeAsync(string id, object data, Type returnType)
+        public async Task<object> InvokeAsync(string id, object data, Type returnType, BridgeClientMethodMissingMethodBehavior methodMissingMethodBehavior = BridgeClientMethodMissingMethodBehavior.Report)
         {
-            var result = await InvokeAsync(id, data);
+            var result = await InvokeAsync(id, data, methodMissingMethodBehavior);
             return ResolveInvokeResult(result, returnType);
         }
 
@@ -149,14 +151,22 @@ namespace SpiderEye.Bridge
             return $"window._spidereye._sendEvent({idJson}, {dataJson})";
         }
 
-        private EventResultModel ResolveEventResult(string id, string resultJson)
+        private EventResultModel ResolveEventResult(string id, string resultJson, BridgeClientMethodMissingMethodBehavior missingMethodBehavior)
         {
             var result = JsonConverter.Deserialize<EventResultModel>(resultJson);
 
             if (result.NoSubscriber)
             {
-                MissingClientImplementationDetected?.Invoke(this, id);
-                return result;
+                switch (missingMethodBehavior)
+                {
+                    case BridgeClientMethodMissingMethodBehavior.Report:
+                        MissingClientImplementationDetected?.Invoke(this, id);
+                        return result;
+                    case BridgeClientMethodMissingMethodBehavior.Ignore:
+                        return result;
+                    case BridgeClientMethodMissingMethodBehavior.Throw:
+                        throw new MissingClientMethodImplementationException(id);
+                }
             }
 
             if (result.Success)
