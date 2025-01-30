@@ -13,6 +13,8 @@ namespace SpiderEye.Mac
 
         public IntPtr Handle { get; }
 
+        public bool? IsDarkModeEnabled => EffectiveAppearance is MacOsAppearance.DarkAqua or MacOsAppearance.VibrantDark;
+
         object IApplication.NativeOptions => this;
 
         private static readonly NativeClassDefinition AppDelegateDefinition;
@@ -88,6 +90,16 @@ namespace SpiderEye.Mac
         {
             ObjC.Call(Handle, "terminate:", Handle);
             appDelegate.Dispose();
+        }
+
+        public void ApplyTheme(ApplicationTheme theme)
+        {
+            Appearance = theme switch
+            {
+                ApplicationTheme.Light => MacOsAppearance.VibrantLight,
+                ApplicationTheme.Dark => MacOsAppearance.VibrantDark,
+                _ => null,
+            };
         }
 
         private static NativeClassDefinition CreateAppDelegate()

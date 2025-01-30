@@ -4,7 +4,7 @@
 
   <PropertyGroup>
     <!-- since .NET 5, nuget packages need to target a platform version-->
-    <TargetFramework>net8.0-windows10.0.17763.0</TargetFramework>
+    <TargetFramework>net9.0-windows10.0.17763.0</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
     <AssemblyName>SpiderEye.Native</AssemblyName>
     <RootNamespace>SpiderEye.Windows</RootNamespace>
@@ -13,6 +13,6 @@
   
   <ItemGroup>
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2277.86" />
-    <PackageReference Include="Microsoft.Windows.Compatibility" Version="8.0.1" />
+    <PackageReference Include="Microsoft.Windows.Compatibility" Version="9.0.1" />
   </ItemGroup>
 </Project>

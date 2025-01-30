@@ -6,6 +6,8 @@ namespace SpiderEye.Playground.Core
 {
     public abstract class ProgramBase
     {
+        private const string LightBackgroundColor = "#303030";
+        private const string DarkBackgroundColor = "##1c1c1c";
         public static Uri CustomFileHost { get; private set; }
 
         private static Window _mainWindow;
@@ -28,7 +30,7 @@ namespace SpiderEye.Playground.Core
             window.UseBrowserTitle = true;
             window.EnableScriptInterface = true;
             window.CanResize = true;
-            window.BackgroundColor = "#303030";
+            window.BackgroundColor = LightBackgroundColor;
             window.MinSize = new Size(300, 200);
             window.Icon = icon;
             window.Navigating += (_, uri) => Console.WriteLine("uri changed: " + uri.Url);
@@ -44,6 +46,32 @@ namespace SpiderEye.Playground.Core
             var quitMenu = appMenu.MenuItems.AddLabelItem("Quit");
             quitMenu.SetSystemShortcut(SystemShortcut.Close);
             quitMenu.Click += (s, e) => Application.Exit();
+
+            var darkModeMenu = appMenu.MenuItems.AddLabelItem("Enable dark mode");
+            darkModeMenu.Click += (_, _) =>
+            {
+                Application.ApplyTheme(ApplicationTheme.Dark);
+                foreach (var w in Application.OpenWindows)
+                {
+                    w.BackgroundColor = DarkBackgroundColor;
+                }
+            };
+
+            var lightModeMenu = appMenu.MenuItems.AddLabelItem("Enable light mode");
+            lightModeMenu.Click += (_, _) =>
+            {
+                Application.ApplyTheme(ApplicationTheme.Light);
+                foreach (var w in Application.OpenWindows)
+                {
+                    w.BackgroundColor = LightBackgroundColor;
+                }
+            };
+
+            var osDefaultThemeMenu = appMenu.MenuItems.AddLabelItem("Enable OS default theme");
+            osDefaultThemeMenu.Click += (_, _) =>
+            {
+                Application.ApplyTheme(ApplicationTheme.OsDefault);
+            };
 
             windowMenu.MenuItems.AddMacOsEdit();
             windowMenu.MenuItems.AddMacOsView();

@@ -22,6 +22,8 @@ namespace SpiderEye.Linux
             Application.OpenWindows.AllWindowsClosed += Application_AllWindowsClosed;
         }
 
+        public bool? IsDarkModeEnabled => null;
+
         public void Run()
         {
             Gtk.Main();
@@ -34,6 +36,11 @@ namespace SpiderEye.Linux
                 hasExited = true;
                 Gtk.Quit();
             }
+        }
+
+        public void ApplyTheme(ApplicationTheme theme)
+        {
+            // No-op on linux.
         }
 
         private void Init()
