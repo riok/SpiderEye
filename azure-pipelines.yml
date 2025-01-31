@@ -15,11 +15,11 @@ jobs:
           rid: 'linux-arm64'
           libName: 'Linux'
         mac-x64:
-          imageName: 'macos-11'
+          imageName: 'macos-14'
           rid: 'osx-x64'
           libName: 'Mac'
         mac-arm64:
-          imageName: 'macos-11'
+          imageName: 'macos-14'
           rid: 'osx-arm64'
           libName: 'Mac'
         windows-x64:

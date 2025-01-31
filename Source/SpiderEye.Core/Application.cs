@@ -36,6 +36,13 @@ namespace SpiderEye
         public static IMacOsApplicationOptions MacOsOptions => app.NativeOptions as IMacOsApplicationOptions;
 
         /// <summary>
+        /// Gets whether the dark mode is currently enabled.
+        /// This returns true if the dark theme has been set or then the theme is the OS default and a dark theme is enabled for the whole OS.
+        /// Returns null if the implementation does not support finding out whether dark mode is enabled.
+        /// </summary>
+        public static bool? IsDarkModeEnabled => app.IsDarkModeEnabled;
+
+        /// <summary>
         /// Gets or sets the content provider for loading webview files.
         /// </summary>
         public static IContentProvider ContentProvider
@@ -179,6 +186,18 @@ namespace SpiderEye
             CheckInitialized();
 
             app.Exit();
+        }
+
+        /// <summary>
+        /// Applies a theme to the whole application through native APIs.
+        /// Note that you probably need to set a background color in addition to this to make it look good.
+        /// </summary>
+        /// <param name="theme">The theme to apply.</param>
+        public static void ApplyTheme(ApplicationTheme theme)
+        {
+            CheckInitialized();
+
+            app.ApplyTheme(theme);
         }
 
         /// <summary>
