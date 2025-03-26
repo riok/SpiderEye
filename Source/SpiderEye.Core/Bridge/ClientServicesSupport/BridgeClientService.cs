@@ -1,7 +1,8 @@
 using System;
 using System.Linq;
 using System.Reflection;
-using Microsoft.Extensions.DependencyInjection;
+using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 
 namespace SpiderEye.Bridge.ClientServicesSupport
 {
@@ -11,6 +12,11 @@ namespace SpiderEye.Bridge.ClientServicesSupport
     /// <typeparam name="T">Type of the Interface.</typeparam>
     public class BridgeClientService<T> : DispatchProxy
     {
+        private static readonly MethodInfo _awaitGenericTaskMethod = typeof(BridgeClientService<T>).GetMethod(nameof(AwaitGenericTask), BindingFlags.NonPublic | BindingFlags.Static)
+                                                                     ?? throw new InvalidOperationException("Could not find await task method");
+        private static readonly MethodInfo _awaitTaskMethod = typeof(BridgeClientService<T>).GetMethod(nameof(AwaitTask), BindingFlags.NonPublic | BindingFlags.Static)
+                                                                     ?? throw new InvalidOperationException("Could not find await task method");
+
         private readonly string namePrefix = (typeof(T).GetCustomAttribute<BridgeClientServiceAttribute>()?.Name ?? typeof(T).Name) + ".";
         private WindowCollection windowCollection;
 
@@ -35,35 +41,71 @@ namespace SpiderEye.Bridge.ClientServicesSupport
             var callMode = GetCallMode(clientMethodAttribute);
             var missingMethodBehavior = GetMissingMethodBehavior(clientMethodAttribute);
             string callId = namePrefix + (clientMethodAttribute?.Name ?? targetMethod.Name);
+            var resultType = targetMethod.ReturnType.IsGenericType && targetMethod.ReturnType.GetGenericTypeDefinition() == typeof(Task<>)
+                ? targetMethod.ReturnType.GetGenericTypeDefinition().GetGenericArguments()[0]
+                : targetMethod.ReturnType;
 
+            object result = null;
             switch (callMode)
             {
                 case BridgeClientServiceCallMode.Broadcast:
                 {
-                    object result = null;
                     foreach (var win in windowCollection)
                     {
-                        result = win.Bridge.InvokeAsync(callId, arg, targetMethod.ReturnType, missingMethodBehavior);
+                        result = win.Bridge.InvokeAsync(callId, arg, resultType, missingMethodBehavior);
                     }
 
-                    return result;
+                    break;
                 }
 
                 case BridgeClientServiceCallMode.MainWindow:
                 {
-                    return windowCollection.MainWindow.Bridge.InvokeAsync(callId, arg, targetMethod.ReturnType, missingMethodBehavior);
+                    result = windowCollection.MainWindow.Bridge.InvokeAsync(callId, arg, resultType, missingMethodBehavior);
+                    break;
                 }
 
                 case BridgeClientServiceCallMode.SingleWindow:
                 {
                     var window = args?.OfType<Window>().LastOrDefault()
                         ?? throw new ArgumentException($"if the call mode is {callMode}, the last provided argument must be the target window.");
-                    return window.Bridge.InvokeAsync(callId, arg, targetMethod.ReturnType, missingMethodBehavior);
+                    result = window.Bridge.InvokeAsync(callId, arg, resultType, missingMethodBehavior);
+                    break;
                 }
 
                 default:
                     throw new ArgumentOutOfRangeException($"{callMode} is not a valid CallMode.");
             }
+
+            if (result is not Task task)
+            {
+                return result;
+            }
+
+            var actualResultType = result.GetType();
+            if (actualResultType == typeof(Task))
+            {
+                return AwaitTask(task);
+            }
+
+            if (actualResultType.IsGenericType &&
+                actualResultType.GetGenericTypeDefinition() == typeof(Task<>))
+            {
+                return _awaitGenericTaskMethod
+                    .MakeGenericMethod(resultType)
+                    .Invoke(null, new object[] { task });
+            }
+
+            throw new InvalidOperationException("Unsupported return type.");
+        }
+
+        private static async Task AwaitTask(Task task)
+        {
+            await task;
+        }
+
+        private static async Task<TResult> AwaitGenericTask<TResult>(Task task)
+        {
+            return await (Task<TResult>)task;
         }
 
         private void Init(WindowCollection winCollection)
