@@ -45,6 +45,10 @@ h2 {
     .button-container {
         margin-right: 0.5em;
         float: left;
+        
+        > * {
+            margin-right: 0.5rem;
+        }
     }
 
     .result-group {

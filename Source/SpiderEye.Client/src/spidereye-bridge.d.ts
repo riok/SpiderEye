@@ -6,7 +6,7 @@ declare global {
 }
 
 export type ApiCallback<T> = (result: ApiResult<T>) => void;
-export type EventCallback<TResult = any, TParam = any> = (value?: TParam) => TResult;
+export type EventCallback<TResult = any, TParam = any> = (value?: TParam) => TResult | Promise<TResult>;
 
 export interface SpiderEyeBridge {
     updateTitle(title: string): void;
@@ -15,7 +15,7 @@ export interface SpiderEyeBridge {
     removeEventHandler(name: string): void;
 
     _endApiCall<T>(callbackId: number, result: ApiResult<T>): void;
-    _sendEvent<T>(name: string, value: T): string;
+    _sendEvent<T>(name: string, value: T): void;
 }
 
 export interface ApiResult<T> {

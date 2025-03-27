@@ -1,7 +1,8 @@
 using System;
+using System.Collections.Concurrent;
 using System.Linq;
 using System.Reflection;
-using Microsoft.Extensions.DependencyInjection;
+using System.Threading.Tasks;
 
 namespace SpiderEye.Bridge.ClientServicesSupport
 {
@@ -11,6 +12,13 @@ namespace SpiderEye.Bridge.ClientServicesSupport
     /// <typeparam name="T">Type of the Interface.</typeparam>
     public class BridgeClientService<T> : DispatchProxy
     {
+        private static readonly MethodInfo InvokeMethod = typeof(IWebviewBridge)
+            .GetMethods()
+            .Single(m => m.Name == nameof(IWebviewBridge.InvokeAsync)
+                         && m.IsGenericMethod
+                         && m.GetGenericArguments().Length == 1
+                         && m.GetParameters().Length == 3);
+
         private readonly string namePrefix = (typeof(T).GetCustomAttribute<BridgeClientServiceAttribute>()?.Name ?? typeof(T).Name) + ".";
         private WindowCollection windowCollection;
 
@@ -35,6 +43,15 @@ namespace SpiderEye.Bridge.ClientServicesSupport
             var callMode = GetCallMode(clientMethodAttribute);
             var missingMethodBehavior = GetMissingMethodBehavior(clientMethodAttribute);
             string callId = namePrefix + (clientMethodAttribute?.Name ?? targetMethod.Name);
+            var resultType = targetMethod.ReturnType;
+            if (resultType == typeof(Task))
+            {
+                resultType = typeof(void);
+            }
+            else if (resultType.IsGenericType && resultType.GetGenericTypeDefinition() == typeof(Task<>))
+            {
+                resultType = resultType.GetGenericArguments()[0];
+            }
 
             switch (callMode)
             {
@@ -43,7 +60,7 @@ namespace SpiderEye.Bridge.ClientServicesSupport
                     object result = null;
                     foreach (var win in windowCollection)
                     {
-                        result = win.Bridge.InvokeAsync(callId, arg, targetMethod.ReturnType, missingMethodBehavior);
+                        result = Invoke(resultType, win.Bridge, callId, arg, missingMethodBehavior);
                     }
 
                     return result;
@@ -51,19 +68,35 @@ namespace SpiderEye.Bridge.ClientServicesSupport
 
                 case BridgeClientServiceCallMode.MainWindow:
                 {
-                    return windowCollection.MainWindow.Bridge.InvokeAsync(callId, arg, targetMethod.ReturnType, missingMethodBehavior);
+                    return Invoke(resultType, windowCollection.MainWindow.Bridge, callId, arg, missingMethodBehavior);
                 }
 
                 case BridgeClientServiceCallMode.SingleWindow:
                 {
                     var window = args?.OfType<Window>().LastOrDefault()
                         ?? throw new ArgumentException($"if the call mode is {callMode}, the last provided argument must be the target window.");
-                    return window.Bridge.InvokeAsync(callId, arg, targetMethod.ReturnType, missingMethodBehavior);
+                    return Invoke(resultType, window.Bridge, callId, arg, missingMethodBehavior);
                 }
 
                 default:
                     throw new ArgumentOutOfRangeException($"{callMode} is not a valid CallMode.");
             }
+        }
+
+        private object Invoke(
+            Type resultType,
+            IWebviewBridge bridge,
+            string callId,
+            object arg,
+            BridgeClientMethodMissingMethodBehavior missingMethodBehavior)
+        {
+            if (resultType == typeof(void))
+            {
+                return bridge.InvokeAsync(callId, arg, missingMethodBehavior);
+            }
+
+            return InvokeMethod.MakeGenericMethod(resultType)
+                .Invoke(bridge, [callId, arg, missingMethodBehavior]);
         }
 
         private void Init(WindowCollection winCollection)

@@ -55,20 +55,26 @@
             delete event[name];
         }
     };
-
-    this._sendEvent = function (name, value) {
+    
+    this._sendEventAsync = async function (name, callbackId, value) {
         var result = undefined;
         var error = undefined;
         var callback = events[name];
         if (!callback) {
-            return convertPayloadFn({
-                success: false,
-                noSubscriber: true
-            });
+            exfn(convertPayloadFn({
+                type: "eventCallback",
+                id: name,
+                callbackId: callbackId,
+                parameters: {
+                    success: false,
+                    noSubscriber: true
+                }
+            }));
+            return;
         }
 
         try {
-            result = callback(value);
+            result = await callback(value);
         } catch (e) {
             if (e instanceof Error) {
                 error = {
@@ -81,11 +87,20 @@
             }
         }
 
-        return convertPayloadFn({
-            result: result,
-            hasResult: typeof result !== "undefined",
-            error: error,
-            success: typeof error === "undefined"
-        });
+        exfn(convertPayloadFn({
+            type: "eventCallback",
+            id: name,
+            callbackId: callbackId,
+            parameters: {
+                result: result,
+                hasResult: typeof result !== "undefined",
+                error: error,
+                success: typeof error === "undefined"
+            }
+        }));
     };
+    
+    this._sendEvent = function (name, callbackId, value) {
+        this._sendEventAsync(name, callbackId, value);
+    }
 }
