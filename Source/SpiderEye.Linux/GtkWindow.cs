@@ -1,8 +1,6 @@
 using System;
+using Gtk;
 using SpiderEye.Bridge;
-using SpiderEye.Linux.Interop;
-using SpiderEye.Linux.Native;
-using SpiderEye.Tools;
 
 namespace SpiderEye.Linux
 {
@@ -15,60 +13,49 @@ namespace SpiderEye.Linux
 
         public string Title
         {
-            get { return GLibString.FromPointer(Gtk.Window.GetTitle(Handle)); }
-            set
-            {
-                using (GLibString str = value)
-                {
-                    Gtk.Window.SetTitle(Handle, str);
-                }
-            }
+            get => Window.GetTitle() ?? string.Empty;
+            set => Window.SetTitle(value);
         }
 
         public Size Size
         {
             get
             {
-                Gtk.Window.GetSize(Handle, out int width, out int height);
+                Window.GetDefaultSize(out int width, out int height);
                 return new Size(width, height);
             }
             set
             {
-                if (!shown)
-                {
-                    Gtk.Window.SetDefaultSize(Handle, (int)value.Width, (int)value.Height);
-                }
-                else
-                {
-                    Gtk.Window.Resize(Handle, (int)value.Width, (int)value.Height);
-                }
+                Window.SetDefaultSize((int)value.Width, (int)value.Height);
             }
         }
 
         public Size MinSize
         {
-            get { return minSizeField; }
+            get
+            {
+                Window.GetSizeRequest(out int width, out int height);
+                return new Size(width, height);
+            }
             set
             {
-                minSizeField = value;
-                SetWindowRestrictions(minSizeField, maxSizeField);
+                Window.SetSizeRequest((int)value.Width, (int)value.Height);
             }
         }
 
         public Size MaxSize
         {
-            get { return maxSizeField; }
+            get { return default; }
             set
             {
-                maxSizeField = value;
-                SetWindowRestrictions(minSizeField, maxSizeField);
+                // No-op, not supported
             }
         }
 
         public bool CanResize
         {
-            get { return Gtk.Window.GetResizable(Handle); }
-            set { Gtk.Window.SetResizable(Handle, value); }
+            get { return Window.GetResizable(); }
+            set { Window.SetResizable(value); }
         }
 
         public string BackgroundColor
@@ -127,22 +114,15 @@ namespace SpiderEye.Linux
 
         object IWindow.NativeOptions => this;
 
-        public readonly IntPtr Handle;
+        public Gtk.Window Window { get; }
 
         private readonly GtkWebview webview;
         private readonly WebviewBridge bridge;
-
-        private readonly WidgetCallbackDelegate showDelegate;
-        private readonly DeleteCallbackDelegate deleteDelegate;
-        private readonly WidgetCallbackDelegate destroyDelegate;
-        private readonly WidgetCallbackDelegate focusInDelegate;
 
         private readonly IntPtr menuBarHandle;
         private readonly IntPtr accelGroup;
         private bool shown;
         private bool disposed;
-        private Size minSizeField;
-        private Size maxSizeField;
         private string backgroundColorField;
         private AppIcon iconField;
         private Menu menu;
@@ -168,32 +148,29 @@ namespace SpiderEye.Linux
                 Environment.Exit(-1);
             }
 
-            Handle = Gtk.Window.Create(GtkWindowType.Toplevel);
+            Window = Gtk.Window.New();
 
-            IntPtr contentBox = Gtk.Box.Create(GtkOrientationType.Vertical, 0);
-            Gtk.Widget.ContainerAdd(Handle, contentBox);
-            Gtk.Widget.Show(contentBox);
+            var contentBox = Box.New(Orientation.Vertical, 0);
+            Window.SetChild(webview.WebView);
+            contentBox.Show();
 
             // Do not show the menu bar, since it could be empty
-            menuBarHandle = Gtk.MenuBar.Create();
+            /*
+             TODO handle menubar (probably globally like in macOS)
+             menuBarHandle = Gtk.MenuBar.Create();
             Gtk.Box.AddChild(contentBox, menuBarHandle, false, false, 0);
 
-            Gtk.Box.AddChild(contentBox, webview.Handle, true, true, 0);
-            Gtk.Widget.Show(webview.Handle);
+            contentBox.Append(webview, true, true, 0);
+            Gtk.Widget.Show(webview.Handle);*/
 
+/*      TODO needed?
             accelGroup = Gtk.AccelGroup.Create();
-            Gtk.Window.AddAccelGroup(Handle, accelGroup);
+            Gtk.Window.AddAccelGroup(Handle, accelGroup);*/
 
-            // need to keep the delegates around or they will get garbage collected
-            showDelegate = ShowCallback;
-            deleteDelegate = DeleteCallback;
-            destroyDelegate = DestroyCallback;
-            focusInDelegate = FocusInCallback;
-
-            GLib.ConnectSignal(Handle, "show", showDelegate, IntPtr.Zero);
-            GLib.ConnectSignal(Handle, "delete-event", deleteDelegate, IntPtr.Zero);
-            GLib.ConnectSignal(Handle, "destroy", destroyDelegate, IntPtr.Zero);
-            GLib.ConnectSignal(Handle, "focus-in-event", focusInDelegate, IntPtr.Zero);
+            Window.OnShow += ShowCallback;
+            Window.OnCloseRequest += DeleteCallback;
+            Window.OnDestroy += DestroyCallback;
+            Window.OnActivateFocus += FocusInCallback;
 
             webview.CloseRequested += Webview_CloseRequested;
             webview.TitleChanged += Webview_TitleChanged;
@@ -201,7 +178,7 @@ namespace SpiderEye.Linux
 
         public void Show()
         {
-            Gtk.Window.Present(Handle);
+            Window.Show();
             shown = true;
         }
 
@@ -212,15 +189,15 @@ namespace SpiderEye.Linux
                 return;
             }
 
-            Gtk.Window.SetTransient(modalWinToShow.Handle, Handle);
-            Gtk.Window.DestoryWithParent(modalWinToShow.Handle, true);
-            Gtk.Window.SetModal(modalWinToShow.Handle, true);
+            modalWinToShow.Window.SetTransientFor(Window);
+            modalWinToShow.Window.DestroyWithParent = true;
+            modalWinToShow.Window.SetModal(true);
             modalWinToShow.Show();
         }
 
         public void Close()
         {
-            Gtk.Window.Close(Handle);
+            Window.Close();
         }
 
         public void SetWindowState(WindowState state)
@@ -228,16 +205,16 @@ namespace SpiderEye.Linux
             switch (state)
             {
                 case WindowState.Normal:
-                    Gtk.Window.Unmaximize(Handle);
-                    Gtk.Window.Unminimize(Handle);
+                    Window.Unmaximize();
+                    Window.Unminimize();
                     break;
 
                 case WindowState.Maximized:
-                    Gtk.Window.Maximize(Handle);
+                    Window.Maximize();
                     break;
 
                 case WindowState.Minimized:
-                    Gtk.Window.Minimize(Handle);
+                    Window.Minimize();
                     break;
 
                 default:
@@ -269,7 +246,6 @@ namespace SpiderEye.Linux
             var savedInfo = Application.WindowInfoStorage.LoadWindowInformation(name);
             if (savedInfo == null)
             {
-                Gtk.Window.SetPosition(Handle, GtkWindowPosition.Center);
                 ((IWindow)this).Size = defaultSize;
                 return;
             }
@@ -289,31 +265,25 @@ namespace SpiderEye.Linux
             {
                 disposed = true;
                 webview.Dispose();
-                Gtk.Widget.Destroy(Handle);
+                Window.Destroy();
+                Window.Dispose();
             }
-        }
-
-        private void SetWindowRestrictions(Size min, Size max)
-        {
-            var geometry = new GdkGeometry(min, max);
-            GdkWindowHints hints = 0;
-            if (min != Size.Zero) { hints |= GdkWindowHints.MinSize; }
-            if (max != Size.Zero) { hints |= GdkWindowHints.MaxSize; }
-
-            Gtk.Window.SetGeometryHints(Handle, IntPtr.Zero, ref geometry, hints);
         }
 
         private unsafe void SetIcon(AppIcon icon)
-        {
+        {/* TODO maybe not that easy...
             if (icon == null || icon.Icons.Length == 0)
             {
-                Gtk.Window.SetIcon(Handle, IntPtr.Zero);
+                window.SetIconName(null);
             }
             else
             {
+                Gtk.IconTheme.New().icon
                 IntPtr iconList = IntPtr.Zero;
                 var icons = new IntPtr[icon.Icons.Length];
-
+                var icon = Gio.BytesIcon.New(GLib.Bytes.New(icon.GetIconData(icon.Icons[0])));
+                var theme = Gtk.IconTheme.New();
+                theme.
                 try
                 {
                     for (int i = 0; i < icons.Length; i++)
@@ -342,15 +312,15 @@ namespace SpiderEye.Linux
                         if (item != IntPtr.Zero) { GLib.UnrefObject(item); }
                     }
                 }
-            }
+            }*/
         }
 
-        private void ShowCallback(IntPtr widget, IntPtr userdata)
+        private void ShowCallback(Widget widget, EventArgs args)
         {
             Shown?.Invoke(this, EventArgs.Empty);
         }
 
-        private bool DeleteCallback(IntPtr widget, IntPtr eventData, IntPtr userdata)
+        private bool DeleteCallback(Gtk.Window w, EventArgs a)
         {
             SaveWindowInformation();
 
@@ -360,7 +330,7 @@ namespace SpiderEye.Linux
             return args.Cancel;
         }
 
-        private void DestroyCallback(IntPtr widget, IntPtr userdata)
+        private void DestroyCallback(Widget widget, EventArgs args)
         {
             webview.TitleChanged -= Webview_TitleChanged;
             bridge.TitleChanged -= Webview_TitleChanged;
@@ -368,7 +338,7 @@ namespace SpiderEye.Linux
             Closed?.Invoke(this, EventArgs.Empty);
         }
 
-        private void FocusInCallback(IntPtr widget, IntPtr userdata)
+        private void FocusInCallback(Gtk.Window w, EventArgs args)
         {
             Focused?.Invoke(this, EventArgs.Empty);
         }
@@ -388,28 +358,16 @@ namespace SpiderEye.Linux
 
         private void SetBackgroundColor(string color)
         {
-            IntPtr provider = IntPtr.Zero;
-
-            try
-            {
-                provider = Gtk.Css.Create();
-
-                using (GLibString css = $"* {{background-color:{color}}}")
-                {
-                    Gtk.Css.LoadData(provider, css, new IntPtr(-1), IntPtr.Zero);
-                }
-
-                IntPtr context = Gtk.StyleContext.Get(Handle);
-                Gtk.StyleContext.AddProvider(context, provider, GtkStyleProviderPriority.Application);
-            }
-            finally { if (provider != IntPtr.Zero) { GLib.UnrefObject(provider); } }
+            using var cssProvider = CssProvider.New();
+            cssProvider.LoadFromString($"* {{background-color:{color}}}");
+            Window.GetStyleContext().AddProvider(cssProvider, 600);
         }
 
         private void RefreshMenu()
         {
             ClearMenu();
             PopulateMenu();
-
+/* TODO menu bar similar to macOS
             if (menu.MenuItems.Count > 0)
             {
                 Gtk.Widget.ShowAll(menuBarHandle);
@@ -417,7 +375,7 @@ namespace SpiderEye.Linux
             else
             {
                 Gtk.Widget.Hide(menuBarHandle);
-            }
+            }*/
         }
 
         private void PopulateMenu()
@@ -426,18 +384,18 @@ namespace SpiderEye.Linux
             {
                 return;
             }
-
+/* TODO
             var nativeMenu = NativeCast.To<GtkMenu>(menu.NativeMenu);
             nativeMenu.SetAccelGroup(accelGroup);
 
             foreach (var menuItem in nativeMenu.GetItems())
             {
                 Gtk.Widget.ContainerAdd(menuBarHandle, menuItem.Handle);
-            }
+            }*/
         }
 
         private void ClearMenu()
-        {
+        {/* TODO
             IntPtr existingMenuList = Gtk.Widget.GetChildren(menuBarHandle);
             for (uint i = 0; i < GLib.GetListLength(existingMenuList); i++)
             {
@@ -445,7 +403,7 @@ namespace SpiderEye.Linux
                 Gtk.Widget.Destroy(existingMenu);
             }
 
-            GLib.FreeList(existingMenuList);
+            GLib.FreeList(existingMenuList);*/
         }
 
         private void SaveWindowInformation()
@@ -456,15 +414,11 @@ namespace SpiderEye.Linux
             }
 
             var size = Size;
-            Gtk.Window.GetPosition(Handle, out var x, out var y);
-
             var windowInformation = new WindowInformation
             {
-                Maximised = Gtk.Window.IsMaximized(Handle),
+                Maximised = Window.IsMaximized(),
                 Bounds = new Rectangle
                 {
-                    X = x,
-                    Y = y,
                     Height = (int)size.Height,
                     Width = (int)size.Width,
                 },

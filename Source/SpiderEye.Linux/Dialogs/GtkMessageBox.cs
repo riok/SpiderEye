@@ -1,6 +1,4 @@
-﻿using System;
-using SpiderEye.Linux.Interop;
-using SpiderEye.Linux.Native;
+﻿using System.Threading.Tasks;
 using SpiderEye.Tools;
 
 namespace SpiderEye.Linux
@@ -11,14 +9,16 @@ namespace SpiderEye.Linux
         public string Message { get; set; }
         public MessageBoxButtons Buttons { get; set; }
 
-        public DialogResult Show()
+        public Task<DialogResult> Show()
         {
             return Show(null);
         }
 
-        public DialogResult Show(IWindow parent)
+        public async Task<DialogResult> Show(IWindow parent)
         {
             var window = NativeCast.To<GtkWindow>(parent);
+/* TODO not yet correctly supported by Gir.Core
+            Gtk.Internal.AlertDialog.New()
             IntPtr dialog = IntPtr.Zero;
             try
             {
@@ -39,44 +39,8 @@ namespace SpiderEye.Linux
                     return MapResult(result);
                 }
             }
-            finally { if (dialog != IntPtr.Zero) { Gtk.Widget.Destroy(dialog); } }
-        }
-
-        private GtkButtonsType MapButtons(MessageBoxButtons buttons)
-        {
-            switch (buttons)
-            {
-                case MessageBoxButtons.Ok:
-                    return GtkButtonsType.Ok;
-                case MessageBoxButtons.OkCancel:
-                    return GtkButtonsType.OkCancel;
-                case MessageBoxButtons.YesNo:
-                    return GtkButtonsType.YesNo;
-
-                default:
-                    return GtkButtonsType.Ok;
-            }
-        }
-
-        private DialogResult MapResult(GtkResponseType result)
-        {
-            switch (result)
-            {
-                case GtkResponseType.Ok:
-                    return DialogResult.Ok;
-
-                case GtkResponseType.Cancel:
-                    return DialogResult.Cancel;
-
-                case GtkResponseType.Yes:
-                    return DialogResult.Yes;
-
-                case GtkResponseType.No:
-                    return DialogResult.No;
-
-                default:
-                    return DialogResult.None;
-            }
+            finally { if (dialog != IntPtr.Zero) { Gtk.Widget.Destroy(dialog); } }*/
+            return DialogResult.Ok;
         }
     }
 }

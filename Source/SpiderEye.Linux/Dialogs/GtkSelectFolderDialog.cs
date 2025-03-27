@@ -1,6 +1,5 @@
-﻿using System;
-using SpiderEye.Linux.Interop;
-using SpiderEye.Linux.Native;
+﻿using System.Threading.Tasks;
+using Gio;
 
 namespace SpiderEye.Linux
 {
@@ -8,33 +7,19 @@ namespace SpiderEye.Linux
     {
         public string SelectedPath { get; set; }
 
-        protected override GtkFileChooserAction Type
-        {
-            // SelectFolder doesn't allow creating a new folder, CreateFolder does
-            get { return GtkFileChooserAction.CreateFolder; }
-        }
-
-        protected override void BeforeShow(IntPtr dialog)
+        protected override async Task<DialogResult> Show(Gtk.FileDialog dialog, GtkWindow parent)
         {
             if (!string.IsNullOrWhiteSpace(SelectedPath))
             {
-                using (GLibString dir = SelectedPath)
-                {
-                    Gtk.Dialog.SetCurrentFolder(dialog, dir);
-                }
+                var initialFolder = Functions.FileNewForPath(SelectedPath);
+                dialog.SetInitialFolder(initialFolder);
             }
-        }
 
-        protected override unsafe void BeforeReturn(IntPtr dialog, DialogResult result)
-        {
-            if (result == DialogResult.Ok)
-            {
-                using (var folderPath = new GLibString(Gtk.Dialog.GetFileName(dialog)))
-                {
-                    SelectedPath = folderPath.ToString();
-                }
-            }
-            else { SelectedPath = null; }
+            var folder = await dialog.SelectFolderAsync(parent?.Window);
+            SelectedPath = folder?.GetPath();
+            return folder == null
+                ? DialogResult.Cancel
+                : DialogResult.Ok;
         }
     }
 }

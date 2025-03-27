@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Runtime.InteropServices;
-using SpiderEye.Linux.Interop;
-using SpiderEye.Linux.Native;
+﻿using System.Threading.Tasks;
+using Gio;
 
 namespace SpiderEye.Linux
 {
@@ -10,49 +7,27 @@ namespace SpiderEye.Linux
     {
         public bool Multiselect { get; set; }
 
-        public string[] SelectedFiles
-        {
-            get;
-            private set;
-        }
+        public string[] SelectedFiles { get; private set; }
 
-        protected override GtkFileChooserAction Type
+        protected override async Task<DialogResult> ShowFileDialog(Gtk.FileDialog dialog, GtkWindow? parent)
         {
-            get { return GtkFileChooserAction.Open; }
-        }
+            // TODO dispose?
+            var files = await dialog.OpenMultipleAsync(parent?.Window);
 
-        protected override void BeforeShow(IntPtr dialog)
-        {
-            base.BeforeShow(dialog);
-            Gtk.Dialog.SetAllowMultiple(dialog, Multiselect);
-        }
-
-        protected override unsafe void BeforeReturn(IntPtr dialog, DialogResult result)
-        {
-            base.BeforeReturn(dialog, result);
-
-            var filesPtr = Gtk.Dialog.GetSelectedFiles(dialog);
-            var files = new List<string>();
-            if (filesPtr != IntPtr.Zero)
+            if (files == null)
             {
-                try
-                {
-                    var list = Marshal.PtrToStructure<GSList>(filesPtr);
-                    while (true)
-                    {
-                        using (var value = new GLibString(list.Data))
-                        {
-                            files.Add(value.ToString());
-                        }
-
-                        if (list.Next == null) { break; }
-                        list = *list.Next;
-                    }
-                }
-                finally { GLib.FreeSList(filesPtr); }
+                return DialogResult.Cancel;
             }
 
-            SelectedFiles = files.ToArray();
+            var countOfFiles = files.GetNItems();
+            SelectedFiles = new string[countOfFiles];
+            for (uint i = 0; i < countOfFiles; i++)
+            {
+                var file = (File)files.GetObject(i);
+                SelectedFiles[i] = file.GetPath();
+            }
+
+            return DialogResult.Ok;
         }
     }
 }

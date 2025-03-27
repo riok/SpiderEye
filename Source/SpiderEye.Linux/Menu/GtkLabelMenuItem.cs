@@ -1,7 +1,4 @@
 using System;
-using SpiderEye.Linux.Interop;
-using SpiderEye.Linux.Native;
-using SpiderEye.UI.Platforms.Linux.Interop;
 
 namespace SpiderEye.Linux
 {
@@ -9,58 +6,67 @@ namespace SpiderEye.Linux
     {
         public event EventHandler Click;
         private bool hasShortcut;
-        private GdkModifierType shortcutModifierKey;
+        //private GdkModifierType shortcutModifierKey;
         private uint shortcutKey;
 
         public string Label
         {
-            get { return GLibString.FromPointer(Gtk.Menu.GetMenuItemLabel(Handle)); }
+            get
+            {
+                return ""; // return GLibString.FromPointer(Gtk.Menu.GetMenuItemLabel(Handle));
+            }
             set
             {
-                using (GLibString label = value)
+                /*TODO using (GLibString label = value)
                 {
                     Gtk.Menu.SetMenuItemLabel(Handle, label);
-                }
+                }*/
             }
         }
 
-        public bool Enabled
+       /* public bool Enabled
         {
             get { return Gtk.Widget.GetEnabled(Handle); }
             set { Gtk.Widget.SetEnabled(Handle, value); }
+        }*/
+
+        public bool Enabled
+        {
+            get { return false; }
+            set { }
         }
 
-        private readonly MenuActivateDelegate menuActivateDelegate;
+        //private readonly MenuActivateDelegate menuActivateDelegate;
 
         public GtkLabelMenuItem(string label)
             : base(CreateHandle(label))
         {
             // need to keep the delegate around or it will get garbage collected
-            menuActivateDelegate = MenuActivatedCallback;
-            GLib.ConnectSignal(Handle, "activate", menuActivateDelegate, IntPtr.Zero);
+            //menuActivateDelegate = MenuActivatedCallback;
+            //GLib.ConnectSignal(Handle, "activate", menuActivateDelegate, IntPtr.Zero);
         }
 
         public void SetShortcut(ModifierKey modifier, Key key)
         {
             hasShortcut = true;
-            shortcutModifierKey = KeyMapper.MapModifier(modifier);
-            shortcutKey = KeyMapper.MapKey(key);
+            /*shortcutModifierKey = KeyMapper.MapModifier(modifier);
+            shortcutKey = KeyMapper.MapKey(key);*/
         }
 
         public void SetSystemShorcut(SystemShortcut shortcut)
         {
-            (var modifier, var key) = KeyMapper.ResolveSystemShortcut(shortcut);
-            SetShortcut(modifier, key);
+            /*(var modifier, var key) = KeyMapper.ResolveSystemShortcut(shortcut);
+            SetShortcut(modifier, key);*/
         }
 
         public override void SetAccelGroup(IntPtr accelGroupHandle)
         {
             if (hasShortcut)
             {
-                using (GLibString signal = "activate")
+                /*using (GLibString signal = "activate")
                 {
                     Gtk.Widget.AddAccelerator(Handle, signal, accelGroupHandle, shortcutKey, shortcutModifierKey, GtkAccelFlags.Visible);
-                }
+                }*/
             }
 
             subMenu.SetAccelGroup(accelGroupHandle);
@@ -68,10 +74,11 @@ namespace SpiderEye.Linux
 
         private static IntPtr CreateHandle(string label)
         {
-            using (GLibString glabel = label)
+            /*using (GLibString glabel = label)
             {
                 return Gtk.Menu.CreateLabelItem(glabel);
-            }
+            }*/
+            return IntPtr.Zero;
         }
 
         private void MenuActivatedCallback(IntPtr menu, IntPtr userdata)

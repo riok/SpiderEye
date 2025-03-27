@@ -1,11 +1,12 @@
-using SpiderEye.Linux.Native;
+using System;
 
 namespace SpiderEye.Linux
 {
     internal class GtkSeparatorMenuItem : GtkMenuItem
     {
         public GtkSeparatorMenuItem()
-            : base(Gtk.Menu.CreateSeparatorItem())
+            // TODO : base(Gtk.Menu.CreateSeparatorItem())
+        : base(IntPtr.Zero)
         {
         }
     }

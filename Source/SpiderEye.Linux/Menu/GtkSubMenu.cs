@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using SpiderEye.Linux.Native;
 using SpiderEye.Tools;
 
 namespace SpiderEye.Linux
@@ -22,14 +21,14 @@ namespace SpiderEye.Linux
 
             if (handle == null)
             {
-                handle = Gtk.Menu.Create();
-                Gtk.Menu.SetSubmenu(parentMenuItem, handle.Value);
+                /*handle = Gtk.Menu.Create();
+                Gtk.Menu.SetSubmenu(parentMenuItem, handle.Value);*/
             }
 
             var nativeItem = NativeCast.To<GtkMenuItem>(item);
             menuItems.Add(nativeItem);
-            Gtk.Menu.AddItem(handle.Value, nativeItem.Handle);
-            Gtk.Widget.Show(nativeItem.Handle);
+            /*Gtk.Menu.AddItem(handle.Value, nativeItem.Handle);
+            Gtk.Widget.Show(nativeItem.Handle);*/
         }
 
 
@@ -40,7 +39,7 @@ namespace SpiderEye.Linux
                 return;
             }
 
-            Gtk.Menu.SetAccelGroup(handle.Value, accelGroupHandle);
+            //Gtk.Menu.SetAccelGroup(handle.Value, accelGroupHandle);
             foreach (var item in menuItems)
             {
                 item.SetAccelGroup(accelGroupHandle);
@@ -51,7 +50,7 @@ namespace SpiderEye.Linux
         {
             if (handle != null)
             {
-                Gtk.Widget.Destroy(handle.Value);
+                //Gtk.Widget.Destroy(handle.Value);
             }
         }
     }

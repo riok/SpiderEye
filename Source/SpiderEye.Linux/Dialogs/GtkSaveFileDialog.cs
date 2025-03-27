@@ -1,6 +1,4 @@
-﻿using System;
-using SpiderEye.Linux.Interop;
-using SpiderEye.Linux.Native;
+﻿using System.Threading.Tasks;
 
 namespace SpiderEye.Linux
 {
@@ -8,15 +6,13 @@ namespace SpiderEye.Linux
     {
         public bool OverwritePrompt { get; set; }
 
-        protected override GtkFileChooserAction Type
+        protected override async Task<DialogResult> ShowFileDialog(Gtk.FileDialog dialog, GtkWindow? parent)
         {
-            get { return GtkFileChooserAction.Save; }
-        }
-
-        protected override void BeforeShow(IntPtr dialog)
-        {
-            base.BeforeShow(dialog);
-            Gtk.Dialog.SetOverwriteConfirmation(dialog, OverwritePrompt);
+            var file = await dialog.SaveAsync(parent?.Window);
+            FileName = file?.GetPath();
+            return file == null
+                ? DialogResult.Cancel
+                : DialogResult.Ok;
         }
     }
 }

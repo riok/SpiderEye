@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Threading;
-using SpiderEye.Linux.Native;
+using Gio;
 
 namespace SpiderEye.Linux
 {
@@ -8,9 +8,10 @@ namespace SpiderEye.Linux
     {
         public IUiFactory Factory { get; }
 
-        public SynchronizationContext SynchronizationContext { get; }
+        public SynchronizationContext SynchronizationContext { get; } // TODO remove?
 
         private bool hasExited = false;
+        private Gtk.Application application;
 
         public GtkApplication()
         {
@@ -26,7 +27,7 @@ namespace SpiderEye.Linux
 
         public void Run()
         {
-            Gtk.Main();
+            application.Run(0, null);
         }
 
         public void Exit()
@@ -34,23 +35,31 @@ namespace SpiderEye.Linux
             if (!hasExited)
             {
                 hasExited = true;
-                Gtk.Quit();
+                application.Quit();
+                application.Dispose();
             }
         }
 
         public void ApplyTheme(ApplicationTheme theme)
         {
             // No-op on linux.
+            // TODO check gtk-application-prefer-dark-theme
+            // TODO maybe gtk_widget_queue_draw is needed afterwards
+
+            /*
+    var buf = GtkSource.Buffer.New(null);
+    var view = GtkSource.View.NewWithBuffer(buf);
+            if (settings?.GtkApplicationPreferDarkTheme == true ||
+                settings?.GtkThemeName?.ToLower()?.Contains("dark") == true)
+                buf.SetStyleScheme(GtkSource.StyleSchemeManager.GetDefault().GetScheme("Adwaita-dark"));
+                */
         }
 
         private void Init()
         {
-            var argv = IntPtr.Zero;
-            int argc = 0;
-            if (!Gtk.Init(ref argc, ref argv))
-            {
-                throw new InvalidOperationException("Could not initialize GTK+");
-            }
+            WebKit.Module.Initialize();
+            // TODO supply application id
+            application = Gtk.Application.New("test.app.SpiderEye", ApplicationFlags.FlagsNone);
         }
 
         private void Application_AllWindowsClosed(object sender, EventArgs e)

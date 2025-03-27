@@ -1,4 +1,6 @@
-﻿namespace SpiderEye
+﻿using System.Threading.Tasks;
+
+namespace SpiderEye
 {
     /// <summary>
     /// Represents a dialog.
@@ -14,13 +16,13 @@
         /// Shows the dialog.
         /// </summary>
         /// <returns>The user selection.</returns>
-        DialogResult Show();
+        Task<DialogResult> Show();
 
         /// <summary>
         /// Shows the dialog.
         /// </summary>
         /// <param name="parent">The parent window.</param>
         /// <returns>The user selection.</returns>
-        DialogResult Show(IWindow parent);
+        Task<DialogResult> Show(IWindow parent);
     }
 }

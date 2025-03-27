@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using SpiderEye.Mac.Interop;
 using SpiderEye.Mac.Native;
 using SpiderEye.Tools;
@@ -11,12 +12,12 @@ namespace SpiderEye.Mac
         public string Message { get; set; }
         public MessageBoxButtons Buttons { get; set; }
 
-        public DialogResult Show()
+        public Task<DialogResult> Show()
         {
             return Show(null);
         }
 
-        public DialogResult Show(IWindow parent)
+        public Task<DialogResult> Show(IWindow parent)
         {
             var window = NativeCast.To<CocoaWindow>(parent);
             using (var alert = NSDialog.CreateAlert())
@@ -27,7 +28,7 @@ namespace SpiderEye.Mac
                 ObjC.Call(alert.Handle, "setInformativeText:", NSString.Create(Message ?? string.Empty));
                 AddButtons(alert.Handle, Buttons);
 
-                return (DialogResult)alert.Run(window);
+                return Task.FromResult((DialogResult)alert.Run(window));
             }
         }
 

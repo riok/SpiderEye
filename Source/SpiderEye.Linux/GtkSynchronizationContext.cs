@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using System.Threading;
-using SpiderEye.Linux.Interop;
-using SpiderEye.Linux.Native;
+using GLib;
+using GLib.Internal;
+using Functions = GLib.Internal.Functions;
+using Thread = System.Threading.Thread;
 
 namespace SpiderEye.Linux
 {
@@ -14,7 +16,7 @@ namespace SpiderEye.Linux
         }
 
         private readonly int mainThreadId;
-        private readonly GSourceDelegate invokeCallbackDelegate = InvokeCallback;
+        private readonly GLib.Internal.SourceFunc invokeCallbackDelegate = InvokeCallback;
 
         public GtkSynchronizationContext()
             : this(Thread.CurrentThread.ManagedThreadId)
@@ -32,16 +34,11 @@ namespace SpiderEye.Linux
         }
 
         public override void Post(SendOrPostCallback d, object state)
-        {
-            if (d == null) { throw new ArgumentNullException(nameof(d)); }
-
-            var data = new InvokeState(d, state, false);
-            var handle = GCHandle.Alloc(data, GCHandleType.Normal);
-            GLib.ContextInvoke(IntPtr.Zero, invokeCallbackDelegate, GCHandle.ToIntPtr(handle));
-        }
+            => ScheduleAction(() => d(state));
 
         public override void Send(SendOrPostCallback d, object state)
         {
+            // This can be reworked as soon as GirCore supports this in the MainLoopSynchronizationContext
             if (d == null) { throw new ArgumentNullException(nameof(d)); }
 
             if (IsMainThread) { d(state); }
@@ -52,7 +49,7 @@ namespace SpiderEye.Linux
 
                 lock (data)
                 {
-                    GLib.ContextInvoke(IntPtr.Zero, invokeCallbackDelegate, GCHandle.ToIntPtr(handle));
+                    Functions.IdleAdd(Constants.PRIORITY_DEFAULT_IDLE, invokeCallbackDelegate, GCHandle.ToIntPtr(handle), null);
                     Monitor.Wait(data);
                 }
             }
@@ -71,6 +68,25 @@ namespace SpiderEye.Linux
             }
 
             return false;
+        }
+
+        private static void ScheduleAction(Action action)
+        {
+            var proxy = new SourceFuncNotifiedHandler(() =>
+            {
+                try
+                {
+                    action();
+                }
+                catch (Exception ex)
+                {
+                    UnhandledException.Raise(ex);
+                }
+
+                return false;
+            });
+
+            Functions.IdleAdd(Constants.PRIORITY_DEFAULT_IDLE, proxy.NativeCallback, IntPtr.Zero, proxy.DestroyNotify);
         }
 
         private sealed class InvokeState

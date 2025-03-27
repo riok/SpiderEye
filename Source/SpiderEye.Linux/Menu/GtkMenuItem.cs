@@ -1,5 +1,4 @@
 using System;
-using SpiderEye.Linux.Native;
 
 namespace SpiderEye.Linux
 {
@@ -29,7 +28,7 @@ namespace SpiderEye.Linux
 
         public void Dispose()
         {
-            Gtk.Widget.Destroy(Handle);
+            // TODO Gtk.Widget.Destroy(Handle);
         }
     }
 }

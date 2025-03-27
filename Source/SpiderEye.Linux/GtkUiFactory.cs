@@ -1,4 +1,5 @@
-﻿using SpiderEye.Bridge;
+﻿using System;
+using SpiderEye.Bridge;
 
 namespace SpiderEye.Linux
 {

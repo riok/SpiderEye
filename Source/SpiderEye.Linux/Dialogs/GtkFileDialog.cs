@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using SpiderEye.Linux.Interop;
-using SpiderEye.Linux.Native;
+using System.Threading.Tasks;
+using Gio;
 
 namespace SpiderEye.Linux
 {
@@ -17,61 +17,53 @@ namespace SpiderEye.Linux
             FileFilters = new List<FileFilter>();
         }
 
-        protected override void BeforeShow(IntPtr dialog)
+        protected override async Task<DialogResult> Show(Gtk.FileDialog dialog, GtkWindow? parent)
         {
             if (!string.IsNullOrWhiteSpace(InitialDirectory))
             {
-                using (GLibString dir = InitialDirectory)
-                {
-                    Gtk.Dialog.SetCurrentFolder(dialog, dir);
-                }
+                var initialFolder = Functions.FileNewForPath(InitialDirectory);
+                dialog.SetInitialFolder(initialFolder);
             }
 
             if (!string.IsNullOrWhiteSpace(FileName))
             {
-                using (GLibString name = FileName)
-                {
-                    Gtk.Dialog.SetFileName(dialog, name);
-                }
+                dialog.SetInitialName(FileName);
             }
 
-            SetFileFilters(dialog, FileFilters);
+            using var _ = SetFileFilters(dialog, FileFilters);
+            return await ShowFileDialog(dialog, parent);
         }
 
-        protected override void BeforeReturn(IntPtr dialog, DialogResult result)
+        protected virtual async Task<DialogResult> ShowFileDialog(Gtk.FileDialog dialog, GtkWindow? parent)
         {
-            if (result == DialogResult.Ok)
-            {
-                using (var fileName = new GLibString(Gtk.Dialog.GetFileName(dialog)))
-                {
-                    FileName = fileName.ToString();
-                }
-            }
-            else { FileName = null; }
+            var file = await dialog.OpenAsync(parent?.Window);
+            FileName = file?.GetPath();
+            return file == null
+                ? DialogResult.Cancel
+                : DialogResult.Ok;
         }
 
-        private void SetFileFilters(IntPtr dialog, IEnumerable<FileFilter> filters)
+        private IDisposable? SetFileFilters(Gtk.FileDialog dialog, IEnumerable<FileFilter> filters)
         {
-            if (!filters.Any()) { return; }
+            if (!filters.Any()) { return null; }
+
+            var filterList = ListStore.New(Gtk.FileFilter.GetGType());
 
             foreach (var filter in filters)
             {
-                var gfilter = Gtk.Dialog.FileFilter.Create();
-                using (GLibString name = filter.Name)
-                {
-                    Gtk.Dialog.FileFilter.SetName(gfilter, name);
-                }
+                var f = Gtk.FileFilter.New();
+                f.SetName(filter.Name);
 
                 foreach (string filterValue in filter.Filters)
                 {
-                    using (GLibString value = filterValue)
-                    {
-                        Gtk.Dialog.FileFilter.AddPattern(gfilter, value);
-                    }
+                    f.AddPattern(filterValue);
                 }
 
-                Gtk.Dialog.AddFileFilter(dialog, gfilter);
+                filterList.Append(f);
             }
+
+            dialog.SetFilters(filterList);
+            return filterList;
         }
     }
 }

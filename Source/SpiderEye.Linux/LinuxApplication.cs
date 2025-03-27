@@ -20,7 +20,7 @@ namespace SpiderEye.Linux
             }
             catch (DllNotFoundException)
             {
-                Console.WriteLine("Dependencies are missing. Please make sure that 'libgtk-3' and 'libwebkit2gtk-4.0' are installed.");
+                Console.WriteLine("Dependencies are missing. Please make sure that 'libgtk-4' and 'libwebkit2gtk-6.0' are installed.");
                 Environment.Exit(-1);
             }
 
