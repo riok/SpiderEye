@@ -1,38 +1,28 @@
-﻿using System;
-using SpiderEye.Linux.Interop;
-using SpiderEye.Linux.Native;
+﻿using Gtk;
+using Functions = Gio.Functions;
 
 namespace SpiderEye.Linux
 {
     internal class GtkSelectFolderDialog : GtkDialog, IFolderSelectDialog
     {
+        protected override FileChooserAction Type => FileChooserAction.SelectFolder;
         public string SelectedPath { get; set; }
 
-        protected override GtkFileChooserAction Type
-        {
-            // SelectFolder doesn't allow creating a new folder, CreateFolder does
-            get { return GtkFileChooserAction.CreateFolder; }
-        }
-
-        protected override void BeforeShow(IntPtr dialog)
+        protected override void BeforeShow(FileChooserNative dialog)
         {
             if (!string.IsNullOrWhiteSpace(SelectedPath))
             {
-                using (GLibString dir = SelectedPath)
-                {
-                    Gtk.Dialog.SetCurrentFolder(dialog, dir);
-                }
+                using var initialDir = Functions.FileNewForPath(SelectedPath);
+                dialog.SetCurrentFolder(initialDir);
             }
         }
 
-        protected override unsafe void BeforeReturn(IntPtr dialog, DialogResult result)
+        protected override unsafe void BeforeReturn(FileChooserNative dialog, DialogResult result)
         {
             if (result == DialogResult.Ok)
             {
-                using (var folderPath = new GLibString(Gtk.Dialog.GetFileName(dialog)))
-                {
-                    SelectedPath = folderPath.ToString();
-                }
+                using var file = dialog.GetFile();
+                SelectedPath = file?.GetPath();
             }
             else { SelectedPath = null; }
         }

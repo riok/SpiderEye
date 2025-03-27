@@ -1,35 +1,11 @@
-using System;
-using SpiderEye.Linux.Native;
+namespace SpiderEye.Linux;
 
-namespace SpiderEye.Linux
+internal abstract class GtkMenuItem : IMenuItem
 {
-    internal class GtkMenuItem : IMenuItem
+    public virtual void Dispose()
     {
-        public readonly IntPtr Handle;
-        protected GtkSubMenu subMenu;
-
-        protected GtkMenuItem(IntPtr handle)
-        {
-            Handle = handle;
-        }
-
-        public IMenu CreateSubMenu()
-        {
-            if (subMenu == null)
-            {
-                subMenu = new GtkSubMenu(Handle);
-            }
-
-            return subMenu;
-        }
-
-        public virtual void SetAccelGroup(IntPtr accelGroupHandle)
-        {
-        }
-
-        public void Dispose()
-        {
-            Gtk.Widget.Destroy(Handle);
-        }
+        // Nothing to do
     }
+
+    public abstract IMenu CreateSubMenu();
 }

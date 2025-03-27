@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using SpiderEye.Bridge.Models;
 
 namespace SpiderEye.Bridge.Api
@@ -13,12 +14,12 @@ namespace SpiderEye.Bridge.Api
             this.parent = parent ?? throw new ArgumentNullException(nameof(parent));
         }
 
-        public DialogResult ShowMessageBox(MessageBoxConfigModel config)
+        public async Task<DialogResult> ShowMessageBox(MessageBoxConfigModel config)
         {
-            return Application.Invoke(() => MessageBox.Show(parent, config.Message, config.Title, config.Buttons));
+            return await Application.InvokeAsync(() => MessageBox.Show(parent, config.Message, config.Title, config.Buttons));
         }
 
-        public FileResultModel ShowSaveFileDialog(SaveFileDialogConfigModel config)
+        public async Task<FileResultModel> ShowSaveFileDialog(SaveFileDialogConfigModel config)
         {
             var dialog = new SaveFileDialog
             {
@@ -36,16 +37,16 @@ namespace SpiderEye.Bridge.Api
                 }
             }
 
-            var result = Application.Invoke(() => dialog.Show(parent));
+            var result = await Application.InvokeAsync(() => dialog.Show(parent));
             return new FileResultModel
             {
                 DialogResult = result,
                 File = dialog.FileName,
-                Files = new string[] { dialog.FileName },
+                Files = [dialog.FileName],
             };
         }
 
-        public FileResultModel ShowOpenFileDialog(OpenFileDialogConfigModel config)
+        public async Task<FileResultModel> ShowOpenFileDialog(OpenFileDialogConfigModel config)
         {
             var dialog = new OpenFileDialog
             {
@@ -63,7 +64,7 @@ namespace SpiderEye.Bridge.Api
                 }
             }
 
-            var result = Application.Invoke(() => dialog.Show(parent));
+            var result = await Application.InvokeAsync(() => dialog.Show(parent));
             return new FileResultModel
             {
                 DialogResult = result,
@@ -72,7 +73,7 @@ namespace SpiderEye.Bridge.Api
             };
         }
 
-        public FileResultModel ShowFolderSelectDialog(SelectFolderDialogConfigModel config)
+        public async Task<FileResultModel> ShowFolderSelectDialog(SelectFolderDialogConfigModel config)
         {
             var dialog = new FolderSelectDialog
             {
@@ -80,12 +81,12 @@ namespace SpiderEye.Bridge.Api
                 SelectedPath = config.SelectedPath,
             };
 
-            var result = Application.Invoke(() => dialog.Show(parent));
+            var result = await Application.InvokeAsync(() => dialog.Show(parent));
             return new FileResultModel
             {
                 DialogResult = result,
                 File = dialog.SelectedPath,
-                Files = new string[] { dialog.SelectedPath },
+                Files = [dialog.SelectedPath],
             };
         }
     }

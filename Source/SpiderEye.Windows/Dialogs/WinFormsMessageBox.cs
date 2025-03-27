@@ -1,4 +1,5 @@
-﻿using SpiderEye.Tools;
+﻿using System.Threading.Tasks;
+using SpiderEye.Tools;
 using SpiderEye.Windows.Interop;
 using WFMessageBox = System.Windows.Forms.MessageBox;
 
@@ -10,12 +11,12 @@ namespace SpiderEye.Windows
         public string Message { get; set; }
         public MessageBoxButtons Buttons { get; set; }
 
-        public DialogResult Show()
+        public Task<DialogResult> Show()
         {
             return Show(null);
         }
 
-        public DialogResult Show(IWindow parent)
+        public Task<DialogResult> Show(IWindow parent)
         {
             var window = NativeCast.To<WinFormsWindow>(parent);
             System.Windows.Forms.DialogResult result;
@@ -35,7 +36,7 @@ namespace SpiderEye.Windows
                     WinFormsMapper.MapButtons(Buttons));
             }
 
-            return WinFormsMapper.MapResult(result);
+            return Task.FromResult(WinFormsMapper.MapResult(result));
         }
     }
 }

@@ -1,4 +1,6 @@
-﻿namespace SpiderEye
+﻿using System.Threading.Tasks;
+
+namespace SpiderEye
 {
     /// <summary>
     /// Represents a dialog.
@@ -30,7 +32,7 @@
         /// Shows the dialog.
         /// </summary>
         /// <returns>The user selection.</returns>
-        public DialogResult Show()
+        public Task<DialogResult> Show()
         {
             return NativeDialog.Show();
         }
@@ -40,7 +42,7 @@
         /// </summary>
         /// <param name="parent">The parent window.</param>
         /// <returns>The user selection.</returns>
-        public DialogResult Show(Window parent)
+        public Task<DialogResult> Show(Window parent)
         {
             return NativeDialog.Show(parent?.NativeWindow);
         }

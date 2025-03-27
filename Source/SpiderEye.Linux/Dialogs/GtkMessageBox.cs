@@ -1,6 +1,5 @@
 ﻿using System;
-using SpiderEye.Linux.Interop;
-using SpiderEye.Linux.Native;
+using System.Threading.Tasks;
 using SpiderEye.Tools;
 
 namespace SpiderEye.Linux
@@ -11,72 +10,63 @@ namespace SpiderEye.Linux
         public string Message { get; set; }
         public MessageBoxButtons Buttons { get; set; }
 
-        public DialogResult Show()
+        public Task<DialogResult> Show()
         {
             return Show(null);
         }
 
-        public DialogResult Show(IWindow parent)
+        public async Task<DialogResult> Show(IWindow parent)
         {
             var window = NativeCast.To<GtkWindow>(parent);
-            IntPtr dialog = IntPtr.Zero;
-            try
-            {
-                using (GLibString title = Title)
-                using (GLibString message = Message)
-                {
-                    dialog = Gtk.Dialog.CreateMessageDialog(
-                       window?.Handle ?? IntPtr.Zero,
-                       GtkDialogFlags.Modal | GtkDialogFlags.DestroyWithParent,
-                       GtkMessageType.Other,
-                       MapButtons(Buttons),
-                       IntPtr.Zero);
+            using var dialog = new Gtk.MessageDialog();
+            dialog.SetModal(window != null);
+            dialog.SetDestroyWithParent(window != null);
+            dialog.SetTransientFor(window?.Window);
+            dialog.SetTitle(Title);
+            dialog.Text = Message;
+            dialog.SetApplication(LinuxApplication.App.NativeApplication);
+            dialog.MessageType = Gtk.MessageType.Other;
+            dialog.Decorated = true;
 
-                    GLib.SetProperty(dialog, "title", title);
-                    GLib.SetProperty(dialog, "text", message);
-
-                    var result = Gtk.Dialog.Run(dialog);
-                    return MapResult(result);
-                }
-            }
-            finally { if (dialog != IntPtr.Zero) { Gtk.Widget.Destroy(dialog); } }
-        }
-
-        private GtkButtonsType MapButtons(MessageBoxButtons buttons)
-        {
-            switch (buttons)
+            switch (Buttons)
             {
                 case MessageBoxButtons.Ok:
-                    return GtkButtonsType.Ok;
+                    dialog.AddButton("OK", (int)DialogResult.Ok);
+                    break;
                 case MessageBoxButtons.OkCancel:
-                    return GtkButtonsType.OkCancel;
+                    dialog.AddButton("OK", (int)DialogResult.Ok);
+                    dialog.AddButton("Cancel", (int)DialogResult.Cancel);
+                    break;
                 case MessageBoxButtons.YesNo:
-                    return GtkButtonsType.YesNo;
-
+                    dialog.AddButton("Yes", (int)DialogResult.Yes);
+                    dialog.AddButton("No", (int)DialogResult.No);
+                    break;
                 default:
-                    return GtkButtonsType.Ok;
+                    dialog.AddButton("OK", (int)DialogResult.Ok);
+                    break;
             }
-        }
 
-        private DialogResult MapResult(GtkResponseType result)
-        {
-            switch (result)
+            var taskResultSet = false;
+            var tcs = new TaskCompletionSource<DialogResult>();
+            dialog.OnResponse += (sender, args) =>
             {
-                case GtkResponseType.Ok:
-                    return DialogResult.Ok;
+                // OnResponse is called when the dialog is being closed, regardless if a button has been clicked
+                // The tcs result may not be set here, as it is only set after closing the dialog.
+                // This is because the dialog is disposed after the result is set, meaning we want to close it first and then dispose.
+                if (taskResultSet)
+                {
+                    return;
+                }
 
-                case GtkResponseType.Cancel:
-                    return DialogResult.Cancel;
+                taskResultSet = true;
+                var result = (DialogResult)args.ResponseId;
+                tcs.SetResult(Enum.IsDefined(result) ? result : DialogResult.None);
+            };
 
-                case GtkResponseType.Yes:
-                    return DialogResult.Yes;
-
-                case GtkResponseType.No:
-                    return DialogResult.No;
-
-                default:
-                    return DialogResult.None;
-            }
+            dialog.Show();
+            var result = await tcs.Task;
+            dialog.Destroy();
+            return result;
         }
     }
 }

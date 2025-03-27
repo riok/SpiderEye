@@ -1,57 +1,66 @@
 ﻿using System;
 using System.Collections.Generic;
-using SpiderEye.Linux.Native;
 using SpiderEye.Tools;
 
 namespace SpiderEye.Linux
 {
     internal class GtkSubMenu : IMenu
     {
-        private readonly IntPtr parentMenuItem;
-        private readonly List<GtkMenuItem> menuItems = new List<GtkMenuItem>();
-        private IntPtr? handle;
-
-        internal GtkSubMenu(IntPtr parentMenuItem)
-        {
-            this.parentMenuItem = parentMenuItem;
-        }
+        private bool hasSections;
+        public List<GtkMenuItem> MenuItems { get; } = [];
 
         public void AddItem(IMenuItem item)
         {
             if (item == null) { throw new ArgumentNullException(nameof(item)); }
 
-            if (handle == null)
-            {
-                handle = Gtk.Menu.Create();
-                Gtk.Menu.SetSubmenu(parentMenuItem, handle.Value);
-            }
-
             var nativeItem = NativeCast.To<GtkMenuItem>(item);
-            menuItems.Add(nativeItem);
-            Gtk.Menu.AddItem(handle.Value, nativeItem.Handle);
-            Gtk.Widget.Show(nativeItem.Handle);
+            MenuItems.Add(nativeItem);
+            hasSections |= item is GtkSeparatorMenuItem;
         }
 
-
-        public void SetAccelGroup(IntPtr accelGroupHandle)
+        public Gio.Menu BuildMenu()
         {
-            if (handle == null)
+            var menu = Gio.Menu.New();
+            var currentMenu = menu;
+
+            if (hasSections)
             {
-                return;
+                currentMenu = Gio.Menu.New();
+                menu.AppendSection(null, currentMenu);
             }
 
-            Gtk.Menu.SetAccelGroup(handle.Value, accelGroupHandle);
-            foreach (var item in menuItems)
+            foreach (var item in MenuItems)
             {
-                item.SetAccelGroup(accelGroupHandle);
+                if (item is GtkLabelMenuItem labelItem)
+                {
+                    labelItem.AddToMenu(currentMenu);
+                }
+                else
+                {
+                    currentMenu = Gio.Menu.New();
+                    menu.AppendSection(null, currentMenu);
+                }
+            }
+
+            return menu;
+        }
+
+        public void AddToActionGroup(Gio.SimpleActionGroup actionGroup)
+        {
+            foreach (var item in MenuItems)
+            {
+                if (item is GtkLabelMenuItem labelItem)
+                {
+                    labelItem.AddToActionGroup(actionGroup);
+                }
             }
         }
 
         public void Dispose()
         {
-            if (handle != null)
+            foreach (var item in MenuItems)
             {
-                Gtk.Widget.Destroy(handle.Value);
+                item.Dispose();
             }
         }
     }

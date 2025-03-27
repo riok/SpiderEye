@@ -1,6 +1,6 @@
 ﻿using System;
-using SpiderEye.Linux.Interop;
-using SpiderEye.Linux.Native;
+using System.Threading.Tasks;
+using Gtk;
 using SpiderEye.Tools;
 
 namespace SpiderEye.Linux
@@ -9,111 +9,84 @@ namespace SpiderEye.Linux
     {
         public string Title { get; set; }
 
-        protected abstract GtkFileChooserAction Type { get; }
+        protected abstract FileChooserAction Type { get; }
 
-        public DialogResult Show()
+        public Task<DialogResult> Show()
         {
             return Show(null);
         }
 
-        public DialogResult Show(IWindow parent)
+        public async Task<DialogResult> Show(IWindow parent)
         {
             var window = NativeCast.To<GtkWindow>(parent);
-            bool useNative = false && Gtk.Version.IsAtLeast(3, 2, 0);
-            IntPtr dialog = IntPtr.Zero;
-            try
+            using var chooser = FileChooserNative.New(
+                Title,
+                window?.Window,
+                Type,
+                GetAcceptString(Type),
+                "_Cancel");
+            chooser.SetTitle(Title);
+            chooser.SetCreateFolders(true);
+
+
+            var taskResultSet = false;
+            var tcs = new TaskCompletionSource<DialogResult>();
+            chooser.OnResponse += (sender, args) =>
             {
-                using (GLibString gtitle = Title)
+                // OnResponse is called when the dialog is being closed, regardless if a button has been clicked
+                // The tcs result may not be set here, as it is only set after closing the dialog.
+                // This is because the dialog is disposed after the result is set, meaning we want to close it first and then dispose.
+                if (taskResultSet)
                 {
-                    if (useNative)
-                    {
-                        dialog = Gtk.Dialog.CreateNativeFileDialog(
-                            gtitle.Pointer,
-                            window?.Handle ?? IntPtr.Zero,
-                            Type,
-                            IntPtr.Zero,
-                            IntPtr.Zero);
-                    }
-                    else
-                    {
-                        string acceptString = GetAcceptString(Type);
-                        using (GLibString acceptButton = acceptString)
-                        using (GLibString cancelButton = "_Cancel")
-                        {
-                            dialog = Gtk.Dialog.CreateFileDialog(
-                               gtitle.Pointer,
-                               window?.Handle ?? IntPtr.Zero,
-                               Type,
-                               cancelButton,
-                               GtkResponseType.Cancel,
-                               acceptButton,
-                               GtkResponseType.Accept,
-                               IntPtr.Zero);
-                        }
-                    }
+                    return;
                 }
 
-                Gtk.Dialog.SetCanCreateFolder(dialog, true);
+                taskResultSet = true;
+                var result = MapResult((ResponseType)args.ResponseId);
+                tcs.SetResult(result);
+            };
 
-                BeforeShow(dialog);
+            chooser.Show();
 
-                GtkResponseType result;
-                if (useNative) { result = Gtk.Dialog.RunNative(dialog); }
-                else { result = Gtk.Dialog.Run(dialog); }
+            var result = await tcs.Task;
+            BeforeReturn(chooser, result);
+            chooser.Destroy();
+            return result;
+        }
 
-                var mappedResult = MapResult(result);
-                BeforeReturn(dialog, mappedResult);
+        protected virtual void BeforeShow(FileChooserNative dialog)
+        {
+        }
 
-                return mappedResult;
-            }
-            finally
+        protected virtual void BeforeReturn(FileChooserNative dialog, DialogResult result)
+        {
+        }
+
+        private string GetAcceptString(FileChooserAction type)
+        {
+            return type switch
             {
-                if (dialog != IntPtr.Zero)
-                {
-                    if (useNative) { GLib.UnrefObject(dialog); }
-                    else { Gtk.Widget.Destroy(dialog); }
-                }
-            }
+                FileChooserAction.Open => "_Open",
+                FileChooserAction.Save => "_Save",
+                FileChooserAction.SelectFolder => "_Select",
+                _ => "_Select"
+            };
         }
 
-        protected virtual void BeforeShow(IntPtr dialog)
-        {
-        }
-
-        protected virtual void BeforeReturn(IntPtr dialog, DialogResult result)
-        {
-        }
-
-        private string GetAcceptString(GtkFileChooserAction type)
-        {
-            switch (type)
-            {
-                case GtkFileChooserAction.Open:
-                    return "_Open";
-
-                case GtkFileChooserAction.Save:
-                    return "_Save";
-
-                case GtkFileChooserAction.SelectFolder:
-                default:
-                    return "_Select";
-            }
-        }
-
-        private DialogResult MapResult(GtkResponseType result)
+        private DialogResult MapResult(ResponseType result)
         {
             switch (result)
             {
-                case GtkResponseType.Accept:
-                case GtkResponseType.Ok:
-                case GtkResponseType.Yes:
-                case GtkResponseType.Apply:
+                case ResponseType.Accept:
+                case ResponseType.Ok:
+                case ResponseType.Yes:
+                case ResponseType.Apply:
                     return DialogResult.Ok;
 
-                case GtkResponseType.Reject:
-                case GtkResponseType.Cancel:
-                case GtkResponseType.Close:
-                case GtkResponseType.No:
+                case ResponseType.Reject:
+                case ResponseType.Cancel:
+                case ResponseType.Close:
+                case ResponseType.No:
                     return DialogResult.Cancel;
 
                 default:
