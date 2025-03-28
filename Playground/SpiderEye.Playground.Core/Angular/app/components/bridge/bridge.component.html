@@ -94,3 +94,17 @@
         </div>
     </div>
 </div>
+
+<div class="app-panel">
+    <h2>Reverse Bridge (Client services)</h2>
+
+    <div class="button-result-container">
+        <div class="button-container">
+            <button (click)="callShowMessage()">Call `ShowMessage()`</button>
+            <button (click)="callPrompt()">Call `Prompt()`</button>
+        </div>
+        <div class="result-group">
+            <span>{{promptState}}</span>
+        </div>
+    </div>
+</div>

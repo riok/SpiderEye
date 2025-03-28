@@ -1,16 +1,20 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using SpiderEye.Playground.Core.Bridge;
 
 namespace SpiderEye.Playground.Core
 {
     public class UiBridge
     {
+        private readonly IUiBridgeClientService clientService;
+
         private static readonly Random random = new Random();
         private readonly string instanceId;
 
-        public UiBridge()
+        public UiBridge(IUiBridgeClientService clientService)
         {
+            this.clientService = clientService;
             instanceId = Guid.NewGuid().ToString();
         }
 
@@ -51,6 +55,16 @@ namespace SpiderEye.Playground.Core
         public void ProduceError()
         {
             throw new Exception("Intentional exception from .Net");
+        }
+
+        public void CallShowMessage()
+        {
+            clientService.ShowMessage("This is the message");
+        }
+
+        public async Task<string> CallPrompt()
+        {
+            return await clientService.Prompt("This is the prompt?");
         }
     }
 }

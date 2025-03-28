@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using SpiderEye.Bridge.Api;
@@ -32,6 +34,10 @@ namespace SpiderEye.Bridge
 
         private readonly Window window;
         private readonly IServiceProvider serviceProvider;
+
+        private int callbackId;
+
+        private readonly ConcurrentDictionary<int, (TaskCompletionSource<EventResultModel> TaskCompletionSource, BridgeClientMethodMissingMethodBehavior MissingBehavior)> eventCallbacks = new();
 
         public WebviewBridge(Window window, IServiceProvider serviceProvider = null)
         {
@@ -87,9 +93,16 @@ namespace SpiderEye.Bridge
 
         public async Task<EventResultModel> InvokeAsync(string id, object data, BridgeClientMethodMissingMethodBehavior methodMissingMethodBehavior = BridgeClientMethodMissingMethodBehavior.Report)
         {
-            string script = GetInvokeScript(id, data);
-            string resultJson = await Application.Invoke(() => Webview.ExecuteScriptAsync(script));
-            return ResolveEventResult(id, resultJson, methodMissingMethodBehavior);
+            var callId = Interlocked.Increment(ref callbackId);
+            string script = GetInvokeScript(id, callId, data);
+            var completionSource = new TaskCompletionSource<EventResultModel>();
+            if (!eventCallbacks.TryAdd(callId, (completionSource, methodMissingMethodBehavior)))
+            {
+                throw new InvalidOperationException("Callback id was already added...");
+            }
+
+            await Application.Invoke(() => Webview.ExecuteScriptAsync(script));
+            return await completionSource.Task;
         }
 
         public async Task<T> InvokeAsync<T>(string id, object data, BridgeClientMethodMissingMethodBehavior methodMissingMethodBehavior = BridgeClientMethodMissingMethodBehavior.Report)
@@ -127,6 +140,17 @@ namespace SpiderEye.Bridge
                         var result = await ResolveCall(info.Id, info.Parameters);
                         await EndApiCall(info, result);
                     }
+                    else if (info.Type == "eventCallback" && info.CallbackId.HasValue)
+                    {
+                        if (!eventCallbacks.TryRemove(info.CallbackId.Value, out var callbackInfo))
+                        {
+                            Application.ReportInternalError($"No callback for eventCallBack with name {info.Id} and id {info.CallbackId}");
+                            return;
+                        }
+
+                        var result = ResolveEventResult(info.Id, info.Parameters, callbackInfo.MissingBehavior);
+                        callbackInfo.TaskCompletionSource.SetResult(result);
+                    }
                     else if (info.CallbackId != null)
                     {
                         string message = $"Invalid invoke type \"{info.Type ?? "<null>"}\".";
@@ -142,13 +166,13 @@ namespace SpiderEye.Bridge
             });
         }
 
-        private string GetInvokeScript(string id, object data)
+        private string GetInvokeScript(string id, int callbackId, object data)
         {
             if (string.IsNullOrWhiteSpace(id)) { throw new ArgumentNullException(nameof(id)); }
 
             string dataJson = JsonConverter.Serialize(data);
             string idJson = JsonConverter.Serialize(id); // this makes sure that the name is properly escaped
-            return $"window._spidereye._sendEvent({idJson}, {dataJson})";
+            return $"window._spidereye._sendEvent({idJson}, {callbackId}, {dataJson})";
         }
 
         private EventResultModel ResolveEventResult(string id, string resultJson, BridgeClientMethodMissingMethodBehavior missingMethodBehavior)

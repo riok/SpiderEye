@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
+using SpiderEye.Playground.Core.Bridge;
 
 namespace SpiderEye.Playground.Core
 {
@@ -18,6 +19,7 @@ namespace SpiderEye.Playground.Core
             var icon = AppIcon.FromFile("icon", ".");
 
             var serviceCollection = new ServiceCollection();
+            serviceCollection.AddSpidereyeBridgeClientService<IUiBridgeClientService>();
             serviceCollection.AddScoped<UiBridge>();
             Application.AddGlobalHandler<UiBridge>();
             Application.WindowInfoStorage = new WindowInformationStorage();
