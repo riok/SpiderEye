@@ -219,18 +219,19 @@ namespace SpiderEye.Mac
                 "v@:@@@",
                 (self, op, view, navigationAction, decisionHandler) =>
                 {
+                    bool cancel = false;
                     var instance = definition.GetParent<CocoaWebview>(self);
-                    if (instance == null)
+                    if (instance != null)
                     {
-                        return;
+                        var args = new NavigatingEventArgs(instance.Uri);
+                        instance.Navigating?.Invoke(instance, args);
+                        cancel = args.Cancel;
                     }
 
-                    var args = new NavigatingEventArgs(instance.Uri);
-                    instance.Navigating?.Invoke(instance, args);
 
                     var block = Marshal.PtrToStructure<NSBlock.BlockLiteral>(decisionHandler);
                     var callback = Marshal.GetDelegateForFunctionPointer<NavigationDecisionDelegate>(block.Invoke);
-                    callback(decisionHandler, args.Cancel ? IntPtr.Zero : new IntPtr(1));
+                    callback(decisionHandler, cancel ? IntPtr.Zero : new IntPtr(1));
                 });
 
             definition.AddMethod<ObserveValueDelegate>(
