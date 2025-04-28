@@ -15,4 +15,5 @@ namespace SpiderEye.Mac.Interop
     internal delegate void MenuCallbackDelegate(IntPtr self, IntPtr op, IntPtr menu);
     internal delegate void DispatchDelegate(IntPtr context);
     internal delegate void NavigationDecisionDelegate(IntPtr block, IntPtr result);
+    internal delegate byte OpenFileDelegate(IntPtr self, IntPtr op, IntPtr app, IntPtr filename);
 }

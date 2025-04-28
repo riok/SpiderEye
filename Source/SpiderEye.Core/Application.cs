@@ -20,6 +20,12 @@ namespace SpiderEye
         public static event EventHandler<InternalErrorEventArgs> InternalError;
 
         /// <summary>
+        /// Event handler to subscribe to whenever a file should be opened with the application.
+        /// Currently only supported on macos.
+        /// </summary>
+        public static event EventHandler<OpenFileRequestEventArgs> OpenFileRequested;
+
+        /// <summary>
         /// Gets or sets a value indicating whether the application should exit once the last window is closed.
         /// Default is true.
         /// </summary>
@@ -242,6 +248,13 @@ namespace SpiderEye
             app = application ?? throw new ArgumentNullException(nameof(application));
 
             SynchronizationContext.SetSynchronizationContext(app.SynchronizationContext);
+        }
+
+        internal static bool OpenFile(string filePath)
+        {
+            var args = new OpenFileRequestEventArgs(filePath);
+            OpenFileRequested?.Invoke(null, args);
+            return !args.Cancel;
         }
 
         internal static void ReportInternalError(string message, Exception exception = null)
