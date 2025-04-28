@@ -125,6 +125,11 @@ namespace SpiderEye.Mac
                     ObjC.Call(instance.Handle, "activateIgnoringOtherApps:", true);
                 });
 
+            definition.AddMethod<OpenFileDelegate>(
+                "application:openFile:",
+                "c@:@@",
+                (self, op, app, path) => Application.OpenFile(NSString.GetString(path)) ? (byte)1 : (byte)0);
+
             definition.FinishDeclaration();
 
             return definition;
