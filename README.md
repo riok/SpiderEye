@@ -16,7 +16,7 @@ What's the name supposed to mean? Simple: what kind of view does a spiders eye h
 | Linux Dependencies | Used for |
 |--------------------| ----- |
 | libgtk-4-1         | Application and window handling |
-| libwebkitgtk-6.0   | Webview |
+| libwebkitgtk-6.0-4   | Webview |
 
 ## Installation
 

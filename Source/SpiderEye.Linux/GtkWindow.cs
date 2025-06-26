@@ -141,7 +141,7 @@ namespace SpiderEye.Linux
                 var dialog = new GtkMessageBox
                 {
                     Title = "Missing dependency",
-                    Message = "The dependency 'libwebkitgtk-6.0' is missing. Make sure it is installed correctly.",
+                    Message = "The dependency 'libwebkitgtk-6.0-4' is missing. Make sure it is installed correctly.",
                     Buttons = MessageBoxButtons.Ok,
                 };
                 dialog.Show();
