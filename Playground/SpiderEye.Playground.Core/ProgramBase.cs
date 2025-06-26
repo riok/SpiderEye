@@ -24,8 +24,13 @@ namespace SpiderEye.Playground.Core
             serviceCollection.AddScoped<UiBridge>();
             Application.AddGlobalHandler<UiBridge>();
             Application.WindowInfoStorage = new WindowInformationStorage();
-            Application.LinuxOptions.ApplicationId = "test.spidereye.playground";
-            Application.LinuxOptions.ApplicationFlags = LinuxApplicationFlags.NonUnique;
+
+            if (Application.LinuxOptions is { } linuxOptions)
+            {
+                linuxOptions.ApplicationId = "test.spidereye.Playground";
+                linuxOptions.ApplicationFlags = LinuxApplicationFlags.NonUnique;
+            }
+
             using var serviceProvider = serviceCollection.BuildServiceProvider();
             _serviceProvider = serviceProvider;
 

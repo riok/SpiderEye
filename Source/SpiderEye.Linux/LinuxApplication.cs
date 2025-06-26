@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 
 namespace SpiderEye.Linux
 {
@@ -18,9 +19,10 @@ namespace SpiderEye.Linux
             {
                 App = new GtkApplication();
             }
-            catch (DllNotFoundException)
+            catch (Exception ex) when (ex is DllNotFoundException or FileNotFoundException)
             {
-                Console.WriteLine("Dependencies are missing. Please make sure that 'libgtk-4-1' and 'libwebkitgtk-6.0' are installed.");
+                Console.WriteLine("Dependencies are missing. Please make sure that 'libgtk-4-1' and 'libwebkitgtk-6.0-4' are installed.");
+                Console.WriteLine(ex.Message);
                 Environment.Exit(-1);
             }
 
