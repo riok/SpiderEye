@@ -28,6 +28,9 @@ internal static class KeyMapper
         return key switch
         {
             Key.None => string.Empty,
+            Key.Comma => "comma",
+            Key.Number0 => "0",
+            >= Key.Number1 and <= Key.Number9 => (key - Key.Number1 + 1).ToString(),
             _ => key.ToString(),
         };
     }
