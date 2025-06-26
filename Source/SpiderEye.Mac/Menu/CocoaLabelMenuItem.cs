@@ -60,7 +60,7 @@ namespace SpiderEye.Mac
         }
 
         private CocoaLabelMenuItem(string label, string action)
-            : base(AppKit.Call("NSMenuItem", "alloc"))
+            : base(Native.AppKit.Call("NSMenuItem", "alloc"))
         {
             ObjC.Call(
                 Handle,

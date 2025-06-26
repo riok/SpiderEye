@@ -74,13 +74,13 @@ namespace SpiderEye.Mac
             Factory = new CocoaUiFactory();
             SynchronizationContext = new CocoaSynchronizationContext();
 
-            Handle = AppKit.Call("NSApplication", "sharedApplication");
+            Handle = Native.AppKit.Call("NSApplication", "sharedApplication");
             appDelegate = AppDelegateDefinition.CreateInstance(this);
 
             ObjC.Call(Handle, "setActivationPolicy:", IntPtr.Zero);
             ObjC.Call(Handle, "setDelegate:", appDelegate.Handle);
 
-            ObjC.SetProperty(AppKit.GetClass("NSWindow"), "allowsAutomaticWindowTabbing", false);
+            ObjC.SetProperty(Native.AppKit.GetClass("NSWindow"), "allowsAutomaticWindowTabbing", false);
         }
 
         public void Run()
@@ -108,10 +108,10 @@ namespace SpiderEye.Mac
         {
             var definition = NativeClassDefinition.FromClass(
                 "SpiderEyeAppDelegate",
-                AppKit.GetClass("NSResponder"),
+                Native.AppKit.GetClass("NSResponder"),
                 // note: NSApplicationDelegate is not available at runtime and returns null
-                AppKit.GetProtocol("NSApplicationDelegate"),
-                AppKit.GetProtocol("NSTouchBarProvider"));
+                Native.AppKit.GetProtocol("NSApplicationDelegate"),
+                Native.AppKit.GetProtocol("NSTouchBarProvider"));
 
             definition.AddMethod<ShouldTerminateDelegate>(
                 "applicationShouldTerminateAfterLastWindowClosed:",

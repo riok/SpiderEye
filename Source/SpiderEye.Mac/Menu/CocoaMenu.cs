@@ -32,10 +32,10 @@ namespace SpiderEye.Mac
         {
             if (title != null)
             {
-                Handle = AppKit.Call("NSMenu", "alloc");
+                Handle = Native.AppKit.Call("NSMenu", "alloc");
                 ObjC.Call(Handle, "initWithTitle:", NSString.Create(title));
             }
-            else { Handle = AppKit.Call("NSMenu", "new"); }
+            else { Handle = Native.AppKit.Call("NSMenu", "new"); }
         }
 
         public void AddItem(IMenuItem item)

@@ -49,7 +49,7 @@ namespace SpiderEye.Mac.Interop
                 _ => throw new InvalidOperationException("unsupported appearance"),
             };
 
-            return AppKit.Call("NSAppearance", "appearanceNamed:", appearanceName);
+            return Native.AppKit.Call("NSAppearance", "appearanceNamed:", appearanceName);
         }
 
         internal static MacOsAppearance GetMacOsAppearance(IntPtr nsAppearance)
