@@ -120,6 +120,7 @@ namespace SpiderEye.Linux
         private readonly WebviewBridge bridge;
 
         private readonly PopoverMenuBar menuBar;
+        private readonly EventControllerMotion windowFocusEventController;
         private bool shown;
         private bool disposed;
         private string backgroundColorField;
@@ -165,7 +166,10 @@ namespace SpiderEye.Linux
             Window.OnShow += ShowCallback;
             Window.OnCloseRequest += DeleteCallback;
             Window.OnDestroy += DestroyCallback;
-            Window.OnActivateFocus += FocusInCallback;
+
+            windowFocusEventController = EventControllerMotion.New();
+            Window.AddController(windowFocusEventController);
+            windowFocusEventController.OnEnter += GotFocusCallback;
 
             webview.CloseRequested += Webview_CloseRequested;
             webview.TitleChanged += Webview_TitleChanged;
@@ -256,13 +260,18 @@ namespace SpiderEye.Linux
 
         public void Dispose()
         {
-            if (!disposed)
+            if (disposed)
             {
-                disposed = true;
-                webview.Dispose();
-                Window.Destroy();
-                Window.Dispose();
+                return;
             }
+
+            windowFocusEventController.OnEnter -= GotFocusCallback;
+            Window.RemoveController(windowFocusEventController);
+            windowFocusEventController.Dispose();
+            disposed = true;
+            webview.Dispose();
+            Window.Destroy();
+            Window.Dispose();
         }
 
         private void SetIcon(AppIcon icon)
@@ -294,7 +303,7 @@ namespace SpiderEye.Linux
             Closed?.Invoke(this, EventArgs.Empty);
         }
 
-        private void FocusInCallback(Gtk.Window w, EventArgs args)
+        private void GotFocusCallback(EventControllerMotion e, EventArgs args)
         {
             Focused?.Invoke(this, EventArgs.Empty);
         }
