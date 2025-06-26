@@ -1,6 +1,7 @@
 using System;
 using System.Runtime.ExceptionServices;
 using System.Threading;
+using System.Threading.Tasks;
 using Newtonsoft.Json;
 using SpiderEye.Bridge;
 #if !NET462
@@ -40,6 +41,11 @@ namespace SpiderEye
         /// Gets mac os related window options.
         /// </summary>
         public static IMacOsApplicationOptions MacOsOptions => app.NativeOptions as IMacOsApplicationOptions;
+
+        /// <summary>
+        /// Gets mac os related window options.
+        /// </summary>
+        public static ILinuxApplicationOptions LinuxOptions => app.NativeOptions as ILinuxApplicationOptions;
 
         /// <summary>
         /// Gets whether the dark mode is currently enabled.
@@ -233,6 +239,32 @@ namespace SpiderEye
         }
 
         /// <summary>
+        /// Executes the given task on the UI main thread.
+        /// </summary>
+        /// <param name="action">The action to execute.</param>
+        public static async Task InvokeAsync(Func<Task> action)
+        {
+            if (action == null) { throw new ArgumentNullException(nameof(action)); }
+            await InvokeSafelyAsync<object>(async () =>
+            {
+                await action();
+                return null;
+            });
+        }
+
+        /// <summary>
+        /// Executes the given task on the UI main thread.
+        /// </summary>
+        /// <typeparam name="T">The type of the return value.</typeparam>
+        /// <param name="function">The function to execute.</param>
+        /// <returns>The result of the given function.</returns>
+        public static Task<T> InvokeAsync<T>(Func<Task<T>> function)
+        {
+            if (function == null) { throw new ArgumentNullException(nameof(function)); }
+            return InvokeSafelyAsync(function);
+        }
+
+        /// <summary>
         /// Checks if the current operating system is correct.
         /// </summary>
         /// <param name="application">The application OS specific implementation.</param>
@@ -280,6 +312,27 @@ namespace SpiderEye
                 }, null);
 
             exception?.Throw();
+        }
+
+        private static Task<T> InvokeSafelyAsync<T>(Func<Task<T>> action)
+        {
+            CheckInitialized();
+
+            var tcs = new TaskCompletionSource<T>();
+            app.SynchronizationContext.Post(async _ =>
+            {
+                try
+                {
+                    var result = await action().ConfigureAwait(false);
+                    tcs.SetResult(result);
+                }
+                catch (Exception ex)
+                {
+                    tcs.SetException(ex);
+                }
+            }, null);
+
+            return tcs.Task;
         }
 
         private static void CheckInitialized()

@@ -1,22 +1,10 @@
-﻿using System;
-using SpiderEye.Linux.Interop;
-using SpiderEye.Linux.Native;
+﻿using Gtk;
 
 namespace SpiderEye.Linux
 {
     internal class GtkSaveFileDialog : GtkFileDialog, ISaveFileDialog
     {
-        public bool OverwritePrompt { get; set; }
-
-        protected override GtkFileChooserAction Type
-        {
-            get { return GtkFileChooserAction.Save; }
-        }
-
-        protected override void BeforeShow(IntPtr dialog)
-        {
-            base.BeforeShow(dialog);
-            Gtk.Dialog.SetOverwriteConfirmation(dialog, OverwritePrompt);
-        }
+        protected override FileChooserAction Type => FileChooserAction.Save;
+        public bool OverwritePrompt { get; set; } // No-op
     }
 }

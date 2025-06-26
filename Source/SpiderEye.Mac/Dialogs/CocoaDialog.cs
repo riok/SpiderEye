@@ -1,4 +1,5 @@
-﻿using SpiderEye.Mac.Interop;
+﻿using System.Threading.Tasks;
+using SpiderEye.Mac.Interop;
 using SpiderEye.Mac.Native;
 using SpiderEye.Tools;
 
@@ -8,12 +9,12 @@ namespace SpiderEye.Mac
     {
         public string Title { get; set; }
 
-        public DialogResult Show()
+        public Task<DialogResult> Show()
         {
             return Show(null);
         }
 
-        public DialogResult Show(IWindow parent)
+        public Task<DialogResult> Show(IWindow parent)
         {
             var window = NativeCast.To<CocoaWindow>(parent);
             var dialog = CreateDialog();
@@ -26,7 +27,7 @@ namespace SpiderEye.Mac
             var mappedResult = MapResult(result);
             BeforeReturn(dialog, mappedResult);
 
-            return mappedResult;
+            return Task.FromResult(mappedResult);
         }
 
         protected abstract NSDialog CreateDialog();

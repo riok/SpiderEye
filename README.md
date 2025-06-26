@@ -7,17 +7,16 @@ What's the name supposed to mean? Simple: what kind of view does a spiders eye h
 
 ## Supported OS
 
-| OS | Version | Runtime (minimum) | Webview | Browser Engine |
-| ----- | ----- | ----- | ----- | ----- |
-| Windows | 7, 8.x, 10 | .Net Core 3.0 or .Net 4.6.2 | WinForms WebBrowser control | IE 9-11 (depending on OS and installed version) |
-| Windows |  10 Build 1803 or newer | .Net Core 3.0 or .Net 4.6.2 | WebViewControl | Edge |
-| Linux | any x64 distro where .Net Core runs | .Net Core 2.0 | WebKit2GTK | WebKit |
-| macOS | x64 10.13 or newer | .Net Core 2.0 | WKWebView | WebKit |
+| OS | Version | Runtime (minimum) | Webview                     | Browser Engine |
+| ----- | ----- | ----- |-----------------------------| ----- |
+| Windows |  10 Build 1803 or newer | .Net Core 3.0 or .Net 4.6.2 | WebView2                    | Edge |
+| Linux | any x64 distro where .Net Core runs | .Net Core 2.0 | WebKitGTK                   | WebKit |
+| macOS | x64 10.13 or newer | .Net Core 2.0 | WKWebView                   | WebKit |
 
-| Linux Dependencies | Used for | Optional |
-| ----- | ----- | ----- |
-| libgtk-3 | Application and window handling | No |
-| libwebkit2gtk-4.0 | Webview | No |
+| Linux Dependencies | Used for |
+|--------------------| ----- |
+| libgtk-4-1         | Application and window handling |
+| libwebkitgtk-6.0   | Webview |
 
 ## Installation
 

@@ -1,58 +1,32 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Runtime.InteropServices;
-using SpiderEye.Linux.Interop;
-using SpiderEye.Linux.Native;
+using Gtk;
 
 namespace SpiderEye.Linux
 {
     internal class GtkOpenFileDialog : GtkFileDialog, IOpenFileDialog
     {
+        protected override FileChooserAction Type => FileChooserAction.Open;
+
         public bool Multiselect { get; set; }
 
-        public string[] SelectedFiles
-        {
-            get;
-            private set;
-        }
+        public string[] SelectedFiles { get; private set; }
 
-        protected override GtkFileChooserAction Type
-        {
-            get { return GtkFileChooserAction.Open; }
-        }
-
-        protected override void BeforeShow(IntPtr dialog)
+        protected override void BeforeShow(FileChooserNative dialog)
         {
             base.BeforeShow(dialog);
-            Gtk.Dialog.SetAllowMultiple(dialog, Multiselect);
+            dialog.SetSelectMultiple(Multiselect);
         }
 
-        protected override unsafe void BeforeReturn(IntPtr dialog, DialogResult result)
+        protected override void BeforeReturn(FileChooserNative dialog, DialogResult result)
         {
             base.BeforeReturn(dialog, result);
 
-            var filesPtr = Gtk.Dialog.GetSelectedFiles(dialog);
-            var files = new List<string>();
-            if (filesPtr != IntPtr.Zero)
+            using var files = dialog.GetFiles();
+            SelectedFiles = new string[files.GetNItems()];
+            for (uint i = 0; i < SelectedFiles.Length; i++)
             {
-                try
-                {
-                    var list = Marshal.PtrToStructure<GSList>(filesPtr);
-                    while (true)
-                    {
-                        using (var value = new GLibString(list.Data))
-                        {
-                            files.Add(value.ToString());
-                        }
-
-                        if (list.Next == null) { break; }
-                        list = *list.Next;
-                    }
-                }
-                finally { GLib.FreeSList(filesPtr); }
+                SelectedFiles[i] = (files.GetObject(i) as Gio.FileHelper)?.GetPath() ?? string.Empty;
             }
-
-            SelectedFiles = files.ToArray();
         }
     }
 }

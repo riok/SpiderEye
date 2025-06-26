@@ -1,4 +1,5 @@
-﻿using SpiderEye.Tools;
+﻿using System.Threading.Tasks;
+using SpiderEye.Tools;
 using SpiderEye.Windows.Interop;
 
 namespace SpiderEye.Windows
@@ -8,12 +9,12 @@ namespace SpiderEye.Windows
     {
         public string Title { get; set; }
 
-        public DialogResult Show()
+        public Task<DialogResult> Show()
         {
             return Show(null);
         }
 
-        public DialogResult Show(IWindow parent)
+        public Task<DialogResult> Show(IWindow parent)
         {
             var dialog = GetDialog();
             BeforeShow(dialog);
@@ -23,7 +24,7 @@ namespace SpiderEye.Windows
 
             BeforeReturn(dialog);
 
-            return WinFormsMapper.MapResult(result);
+            return Task.FromResult(WinFormsMapper.MapResult(result));
         }
 
         protected abstract T GetDialog();

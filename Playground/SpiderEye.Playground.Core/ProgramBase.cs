@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.IO;
 using Microsoft.Extensions.DependencyInjection;
 using SpiderEye.Playground.Core.Bridge;
 
@@ -7,8 +8,8 @@ namespace SpiderEye.Playground.Core
 {
     public abstract class ProgramBase
     {
-        private const string LightBackgroundColor = "#303030";
-        private const string DarkBackgroundColor = "##1c1c1c";
+        private const string LightBackgroundColor = "#ffffff";
+        private const string DarkBackgroundColor = "#1e1e1e";
         public static Uri CustomFileHost { get; private set; }
 
         private static Window _mainWindow;
@@ -23,6 +24,8 @@ namespace SpiderEye.Playground.Core
             serviceCollection.AddScoped<UiBridge>();
             Application.AddGlobalHandler<UiBridge>();
             Application.WindowInfoStorage = new WindowInformationStorage();
+            Application.LinuxOptions.ApplicationId = "test.spidereye.playground";
+            Application.LinuxOptions.ApplicationFlags = LinuxApplicationFlags.NonUnique;
             using var serviceProvider = serviceCollection.BuildServiceProvider();
             _serviceProvider = serviceProvider;
 
@@ -103,9 +106,15 @@ namespace SpiderEye.Playground.Core
                 window.MacOsOptions.Appearance = MacOsAppearance.DarkAqua;
             }
 
-            CustomFileHost = window.RegisterLocalDirectoryMapping(".");
+            CustomFileHost = window.RegisterLocalDirectoryMapping(Path.GetFullPath("."));
 
             SetDevSettings(window);
+
+            Application.InternalError += (_, args) =>
+            {
+                Console.WriteLine("Internal Error: " + args.Message);
+                Console.WriteLine(args.Exception);
+            };
 
             // the port number is defined in the angular.json file (under "architect"->"serve"->"options"->"port")
             // note that you have to run the angular dev server first (npm run watch)

@@ -1,4 +1,7 @@
-﻿namespace SpiderEye
+﻿using System;
+using System.Threading.Tasks;
+
+namespace SpiderEye
 {
     /// <summary>
     /// Provides methods to show a message box.
@@ -10,7 +13,7 @@
         /// </summary>
         /// <param name="message">The displayed message.</param>
         /// <returns>The user selection.</returns>
-        public static DialogResult Show(string message)
+        public static Task<DialogResult> Show(string message)
         {
             return Show(null, message, null, MessageBoxButtons.Ok);
         }
@@ -21,7 +24,7 @@
         /// <param name="message">The displayed message.</param>
         /// <param name="title">The title of the message box.</param>
         /// <returns>The user selection.</returns>
-        public static DialogResult Show(string message, string title)
+        public static Task<DialogResult> Show(string message, string title)
         {
             return Show(null, message, title, MessageBoxButtons.Ok);
         }
@@ -33,7 +36,7 @@
         /// <param name="title">The title of the message box.</param>
         /// <param name="buttons">The displayed buttons.</param>
         /// <returns>The user selection.</returns>
-        public static DialogResult Show(string message, string title, MessageBoxButtons buttons)
+        public static Task<DialogResult> Show(string message, string title, MessageBoxButtons buttons)
         {
             return Show(null, message, title, buttons);
         }
@@ -44,7 +47,7 @@
         /// <param name="parent">The parent window.</param>
         /// <param name="message">The displayed message.</param>
         /// <returns>The user selection.</returns>
-        public static DialogResult Show(Window parent, string message)
+        public static Task<DialogResult> Show(Window parent, string message)
         {
             return Show(parent, message, null, MessageBoxButtons.Ok);
         }
@@ -56,7 +59,7 @@
         /// <param name="message">The displayed message.</param>
         /// <param name="title">The title of the message box.</param>
         /// <returns>The user selection.</returns>
-        public static DialogResult Show(Window parent, string message, string title)
+        public static Task<DialogResult> Show(Window parent, string message, string title)
         {
             return Show(parent, message, title, MessageBoxButtons.Ok);
         }
@@ -69,7 +72,7 @@
         /// <param name="title">The title of the message box.</param>
         /// <param name="buttons">The displayed buttons.</param>
         /// <returns>The user selection.</returns>
-        public static DialogResult Show(Window parent, string message, string title, MessageBoxButtons buttons)
+        public static Task<DialogResult> Show(Window parent, string message, string title, MessageBoxButtons buttons)
         {
             var msgBox = Application.Factory.CreateMessageBox();
             msgBox.Title = title;

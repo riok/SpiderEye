@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using SpiderEye.Linux.Interop;
-using SpiderEye.Linux.Native;
+﻿using System.Collections.Generic;
+using Gtk;
+using Functions = Gio.Functions;
 
 namespace SpiderEye.Linux
 {
@@ -17,60 +15,45 @@ namespace SpiderEye.Linux
             FileFilters = new List<FileFilter>();
         }
 
-        protected override void BeforeShow(IntPtr dialog)
+        protected override void BeforeShow(FileChooserNative dialog)
         {
             if (!string.IsNullOrWhiteSpace(InitialDirectory))
             {
-                using (GLibString dir = InitialDirectory)
-                {
-                    Gtk.Dialog.SetCurrentFolder(dialog, dir);
-                }
+                using var initialDir = Functions.FileNewForPath(InitialDirectory);
+                dialog.SetCurrentFolder(initialDir);
             }
 
             if (!string.IsNullOrWhiteSpace(FileName))
             {
-                using (GLibString name = FileName)
-                {
-                    Gtk.Dialog.SetFileName(dialog, name);
-                }
+                dialog.SetCurrentName(FileName);
             }
 
             SetFileFilters(dialog, FileFilters);
         }
 
-        protected override void BeforeReturn(IntPtr dialog, DialogResult result)
+        protected override void BeforeReturn(FileChooserNative dialog, DialogResult result)
         {
             if (result == DialogResult.Ok)
             {
-                using (var fileName = new GLibString(Gtk.Dialog.GetFileName(dialog)))
-                {
-                    FileName = fileName.ToString();
-                }
+                using var file = dialog.GetFile();
+                FileName = file?.GetPath();
             }
             else { FileName = null; }
         }
 
-        private void SetFileFilters(IntPtr dialog, IEnumerable<FileFilter> filters)
+        private void SetFileFilters(FileChooserNative dialog, IEnumerable<FileFilter> filters)
         {
-            if (!filters.Any()) { return; }
-
             foreach (var filter in filters)
             {
-                var gfilter = Gtk.Dialog.FileFilter.Create();
-                using (GLibString name = filter.Name)
-                {
-                    Gtk.Dialog.FileFilter.SetName(gfilter, name);
-                }
+                var f = Gtk.FileFilter.New();
+                f.SetName(filter.Name);
 
                 foreach (string filterValue in filter.Filters)
                 {
-                    using (GLibString value = filterValue)
-                    {
-                        Gtk.Dialog.FileFilter.AddPattern(gfilter, value);
-                    }
+                    f.AddPattern(filterValue);
                 }
 
-                Gtk.Dialog.AddFileFilter(dialog, gfilter);
+                dialog.AddFilter(f);
             }
         }
     }

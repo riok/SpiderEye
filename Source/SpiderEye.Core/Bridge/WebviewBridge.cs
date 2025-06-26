@@ -101,7 +101,7 @@ namespace SpiderEye.Bridge
                 throw new InvalidOperationException("Callback id was already added...");
             }
 
-            await Application.Invoke(() => Webview.ExecuteScriptAsync(script));
+            await Application.InvokeAsync(() => Webview.ExecuteScriptAsync(script));
             return await completionSource.Task;
         }
 
@@ -224,7 +224,7 @@ namespace SpiderEye.Bridge
         {
             string resultJson = JsonConverter.Serialize(result);
             string script = $"window._spidereye._endApiCall({info.CallbackId}, {resultJson})";
-            await Application.Invoke(() => Webview.ExecuteScriptAsync(script));
+            await Application.InvokeAsync(() => Webview.ExecuteScriptAsync(script));
         }
 
         private async Task<ApiResultModel> ResolveCall(string id, string parameters)

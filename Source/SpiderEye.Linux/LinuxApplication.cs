@@ -7,7 +7,7 @@ namespace SpiderEye.Linux
     /// </summary>
     public static class LinuxApplication
     {
-        private static GtkApplication app;
+        internal static GtkApplication App { get; private set; }
 
         /// <summary>
         /// Initializes the application.
@@ -16,15 +16,15 @@ namespace SpiderEye.Linux
         {
             try
             {
-                app = new GtkApplication();
+                App = new GtkApplication();
             }
             catch (DllNotFoundException)
             {
-                Console.WriteLine("Dependencies are missing. Please make sure that 'libgtk-3' and 'libwebkit2gtk-4.0' are installed.");
+                Console.WriteLine("Dependencies are missing. Please make sure that 'libgtk-4-1' and 'libwebkitgtk-6.0' are installed.");
                 Environment.Exit(-1);
             }
 
-            Application.Register(app, OperatingSystem.Linux);
+            Application.Register(App, OperatingSystem.Linux);
         }
     }
 }

@@ -31,7 +31,7 @@ namespace SpiderEye.Linux
 
         public IMenu CreateMenu()
         {
-            return new GtkMenu();
+            return new GtkTopMenu();
         }
 
         public ILabelMenuItem CreateLabelMenu(string label)

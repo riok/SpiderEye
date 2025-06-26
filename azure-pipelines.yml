@@ -7,11 +7,11 @@ jobs:
     strategy:
       matrix:
         linux-x64:
-          imageName: 'ubuntu-20.04'
+          imageName: 'ubuntu-24.04'
           rid: 'linux-x64'
           libName: 'Linux'
         linux-arm64:
-          imageName: 'ubuntu-20.04'
+          imageName: 'ubuntu-24.04'
           rid: 'linux-arm64'
           libName: 'Linux'
         mac-x64:
@@ -45,7 +45,7 @@ jobs:
         displayName: 'Install linux dependencies'
         condition: startsWith(variables.rid, 'linux-')
         inputs:
-          script: 'sudo apt-get update && sudo apt-get install libgtk-3-dev libwebkit2gtk-4.0-dev'
+          script: 'sudo apt-get update && sudo apt-get install libgtk-4-1 libwebkitgtk-6.0-4'
       - task: CmdLine@2
         displayName: 'dotnet pack SpiderEye.Native'
         inputs:
@@ -58,7 +58,7 @@ jobs:
   - job: 'CombinePackages'
     dependsOn: 'BuildPackage'
     pool:
-      vmImage: 'ubuntu-20.04'
+      vmImage: 'ubuntu-24.04'
     steps:
       - task: DownloadBuildArtifacts@0
         inputs:
@@ -98,7 +98,7 @@ jobs:
           publishLocation: 'Container'
   - job: 'BuildCore'
     pool:
-      vmImage: 'ubuntu-20.04'
+      vmImage: 'ubuntu-24.04'
     steps:
       - task: UseDotNet@2
         displayName: 'Use .NET Core sdk'

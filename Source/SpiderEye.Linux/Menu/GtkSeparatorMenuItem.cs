@@ -1,12 +1,11 @@
-using SpiderEye.Linux.Native;
-
 namespace SpiderEye.Linux
 {
     internal class GtkSeparatorMenuItem : GtkMenuItem
     {
-        public GtkSeparatorMenuItem()
-            : base(Gtk.Menu.CreateSeparatorItem())
+        public override IMenu CreateSubMenu()
         {
+            // Cannot create a sub menu on a separator item
+            return null;
         }
     }
 }
