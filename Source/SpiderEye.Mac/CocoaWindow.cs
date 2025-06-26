@@ -238,7 +238,7 @@ namespace SpiderEye.Mac
             if (config == null) { throw new ArgumentNullException(nameof(config)); }
             if (bridge == null) { throw new ArgumentNullException(nameof(bridge)); }
 
-            Handle = AppKit.Call("NSWindow", "alloc");
+            Handle = Native.AppKit.Call("NSWindow", "alloc");
 
             var style = GetStyleMask();
             ObjC.SendMessage(
@@ -347,7 +347,7 @@ namespace SpiderEye.Mac
         {
             var definition = NativeClassDefinition.FromObject(
                 "SpiderEyeWindowDelegate",
-                AppKit.GetProtocol("NSWindowDelegate"));
+                Native.AppKit.GetProtocol("NSWindowDelegate"));
 
             definition.AddMethod<WindowShouldCloseDelegate>(
                 "windowShouldClose:",

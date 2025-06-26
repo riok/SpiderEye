@@ -21,7 +21,7 @@ namespace SpiderEye.Mac
         {
             if (!string.IsNullOrWhiteSpace(InitialDirectory))
             {
-                var url = Foundation.Call("NSURL", "fileURLWithPath:", NSString.Create(InitialDirectory));
+                var url = Native.Foundation.Call("NSURL", "fileURLWithPath:", NSString.Create(InitialDirectory));
                 ObjC.Call(dialog.Handle, "setDirectoryURL:", url);
             }
 
@@ -53,7 +53,7 @@ namespace SpiderEye.Mac
             if (fileTypes.Any())
             {
                 var data = fileTypes.ToArray();
-                var array = Foundation.Call("NSArray", "arrayWithObjects:count:", data, new IntPtr(data.Length));
+                var array = Native.Foundation.Call("NSArray", "arrayWithObjects:count:", data, new IntPtr(data.Length));
                 ObjC.Call(dialog, "setAllowedFileTypes:", array);
             }
         }

@@ -16,9 +16,9 @@ namespace SpiderEye.Mac.Interop
 
         public NSRunLoop()
         {
-            loop = Foundation.Call("NSRunLoop", "currentRunLoop");
+            loop = Native.Foundation.Call("NSRunLoop", "currentRunLoop");
             mode = ObjC.Call(loop, "currentMode");
-            date = Foundation.Call("NSDate", "distantFuture");
+            date = Native.Foundation.Call("NSDate", "distantFuture");
             method = ObjC.RegisterName("runMode:beforeDate:");
         }
 

@@ -17,7 +17,7 @@ namespace SpiderEye.Mac
 
             if (!string.IsNullOrWhiteSpace(SelectedPath))
             {
-                var url = Foundation.Call("NSURL", "fileURLWithPath:", NSString.Create(SelectedPath));
+                var url = Native.Foundation.Call("NSURL", "fileURLWithPath:", NSString.Create(SelectedPath));
                 ObjC.Call(panel.Handle, "setDirectoryURL:", url);
             }
 

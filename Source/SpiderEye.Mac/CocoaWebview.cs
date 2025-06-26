@@ -26,7 +26,7 @@ namespace SpiderEye.Mac
             set
             {
                 enableDevToolsField = value;
-                IntPtr boolValue = Foundation.Call("NSNumber", "numberWithBool:", value);
+                IntPtr boolValue = Native.Foundation.Call("NSNumber", "numberWithBool:", value);
                 ObjC.Call(preferences, "setValue:forKey:", boolValue, NSString.Create("developerExtrasEnabled"));
             }
         }
@@ -61,7 +61,7 @@ namespace SpiderEye.Mac
         {
             this.bridge = bridge ?? throw new ArgumentNullException(nameof(bridge));
 
-            IntPtr configuration = WebKit.Call("WKWebViewConfiguration", "new");
+            IntPtr configuration = Native.WebKit.Call("WKWebViewConfiguration", "new");
             IntPtr manager = ObjC.Call(configuration, "userContentController");
 
             callbackClass = CallbackClassDefinition.CreateInstance(this);
@@ -71,7 +71,7 @@ namespace SpiderEye.Mac
             ObjC.Call(configuration, "setURLSchemeHandler:forURLScheme:", schemeHandler.Handle, NSString.Create(SpiderEyeScheme));
 
             ObjC.Call(manager, "addScriptMessageHandler:name:", callbackClass.Handle, NSString.Create("external"));
-            IntPtr script = WebKit.Call("WKUserScript", "alloc");
+            IntPtr script = Native.WebKit.Call("WKUserScript", "alloc");
             ObjC.Call(
                 script,
                 "initWithSource:injectionTime:forMainFrameOnly:",
@@ -80,11 +80,11 @@ namespace SpiderEye.Mac
                 IntPtr.Zero);
             ObjC.Call(manager, "addUserScript:", script);
 
-            Handle = WebKit.Call("WKWebView", "alloc");
+            Handle = Native.WebKit.Call("WKWebView", "alloc");
             ObjC.Call(Handle, "initWithFrame:configuration:", CGRect.Zero, configuration);
             ObjC.Call(Handle, "setNavigationDelegate:", callbackClass.Handle);
 
-            IntPtr boolValue = Foundation.Call("NSNumber", "numberWithBool:", false);
+            IntPtr boolValue = Native.Foundation.Call("NSNumber", "numberWithBool:", false);
             ObjC.Call(Handle, "setValue:forKey:", boolValue, NSString.Create("drawsBackground"));
             ObjC.Call(Handle, "addObserver:forKeyPath:options:context:", callbackClass.Handle, NSString.Create("title"), IntPtr.Zero, IntPtr.Zero);
 
@@ -103,8 +103,8 @@ namespace SpiderEye.Mac
             if (!uri.IsAbsoluteUri) { uri = new Uri(customHost, uri); }
 
             var uriStr = uri.ToString().Replace(" ", "%20");
-            IntPtr nsUrl = Foundation.Call("NSURL", "URLWithString:", NSString.Create(uriStr));
-            IntPtr request = Foundation.Call("NSURLRequest", "requestWithURL:", nsUrl);
+            IntPtr nsUrl = Native.Foundation.Call("NSURL", "URLWithString:", NSString.Create(uriStr));
+            IntPtr request = Native.Foundation.Call("NSURLRequest", "requestWithURL:", nsUrl);
             ObjC.Call(Handle, "loadRequest:", request);
         }
 
@@ -210,9 +210,9 @@ namespace SpiderEye.Mac
         {
             var definition = NativeClassDefinition.FromObject(
                 "SpiderEyeWebviewCallbacks",
-                WebKit.GetProtocol("WKNavigationDelegate"),
+                Native.WebKit.GetProtocol("WKNavigationDelegate"),
                 // note: WKScriptMessageHandler is not available at runtime and returns null
-                WebKit.GetProtocol("WKScriptMessageHandler"));
+                Native.WebKit.GetProtocol("WKScriptMessageHandler"));
 
             definition.AddMethod<NavigationDecideDelegate>(
                 "webView:decidePolicyForNavigationAction:decisionHandler:",
@@ -268,7 +268,7 @@ namespace SpiderEye.Mac
             var definition = NativeClassDefinition.FromObject(
                 "SpiderEyeSchemeHandler",
                 // note: WKURLSchemeHandler is not available at runtime and returns null
-                WebKit.GetProtocol("WKURLSchemeHandler"));
+                Native.WebKit.GetProtocol("WKURLSchemeHandler"));
 
             definition.AddMethod<SchemeHandlerDelegate>(
                 "webView:startURLSchemeTask:",
@@ -307,7 +307,7 @@ namespace SpiderEye.Mac
             if (instance.EnableScriptInterface)
             {
                 IntPtr body = ObjC.Call(message, "body");
-                IntPtr isString = ObjC.Call(body, "isKindOfClass:", Foundation.GetClass("NSString"));
+                IntPtr isString = ObjC.Call(body, "isKindOfClass:", Native.Foundation.GetClass("NSString"));
                 if (isString != IntPtr.Zero)
                 {
                     string data = NSString.GetString(body);
@@ -387,7 +387,7 @@ namespace SpiderEye.Mac
             long contentLength,
             string mimeType)
         {
-            IntPtr response = Foundation.Call("NSURLResponse", "alloc");
+            IntPtr response = Native.Foundation.Call("NSURLResponse", "alloc");
             ObjC.Call(
                 response,
                 "initWithURL:MIMEType:expectedContentLength:textEncodingName:",
@@ -398,7 +398,7 @@ namespace SpiderEye.Mac
 
             ObjC.Call(schemeTask, "didReceiveResponse:", response);
 
-            IntPtr nsData = Foundation.Call(
+            IntPtr nsData = Native.Foundation.Call(
                 "NSData",
                 "dataWithBytesNoCopy:length:freeWhenDone:",
                 data,
@@ -411,7 +411,7 @@ namespace SpiderEye.Mac
 
         private static void FinishUriSchemeCallbackWithError(IntPtr schemeTask, int errorCode)
         {
-            var error = Foundation.Call(
+            var error = Native.Foundation.Call(
                 "NSError",
                 "errorWithDomain:code:userInfo:",
                 NSString.Create("com.bildstein.spidereye"),

@@ -47,6 +47,10 @@ jobs:
         inputs:
           script: 'sudo apt-get update && sudo apt-get install libgtk-4-1 libwebkitgtk-6.0-4'
       - task: CmdLine@2
+        displayName: 'dotnet workload restore'
+        inputs:
+          script: 'dotnet workload restore'
+      - task: CmdLine@2
         displayName: 'dotnet pack SpiderEye.Native'
         inputs:
           script: 'dotnet pack --runtime $(rid) --include-symbols --include-source -c $(buildConfiguration) Source/SpiderEye.$(libName)/SpiderEye.$(libName).csproj -o ./artifacts /p:VersionPrefix=$(versionprefix) /p:VersionSuffix=$(Build.BuildNumber)'

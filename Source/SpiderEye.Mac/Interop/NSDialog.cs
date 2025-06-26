@@ -20,19 +20,19 @@ namespace SpiderEye.Mac.Interop
 
         public static NSDialog CreateAlert()
         {
-            var alert = AppKit.Call("NSAlert", "new");
+            var alert = Native.AppKit.Call("NSAlert", "new");
             return new NSDialog(alert, ObjC.Call(alert, "window"), true);
         }
 
         public static NSDialog CreateSavePanel()
         {
-            var panel = AppKit.Call("NSSavePanel", "savePanel");
+            var panel = Native.AppKit.Call("NSSavePanel", "savePanel");
             return new NSDialog(panel, panel, false);
         }
 
         public static NSDialog CreateOpenPanel()
         {
-            var panel = AppKit.Call("NSOpenPanel", "openPanel");
+            var panel = Native.AppKit.Call("NSOpenPanel", "openPanel");
             return new NSDialog(panel, panel, false);
         }
 
