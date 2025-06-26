@@ -17,6 +17,8 @@ namespace SpiderEye.Mac
 
         object IApplication.NativeOptions => this;
 
+        public IClipboard Clipboard { get; } = new CocoaClipboard();
+
         private static readonly NativeClassDefinition AppDelegateDefinition;
         private readonly NativeClassInstance appDelegate;
         private MacOsAppearance? macOsAppearanceField;

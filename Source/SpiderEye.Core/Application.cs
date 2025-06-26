@@ -43,9 +43,14 @@ namespace SpiderEye
         public static IMacOsApplicationOptions MacOsOptions => app.NativeOptions as IMacOsApplicationOptions;
 
         /// <summary>
-        /// Gets mac os related window options.
+        /// Gets linux related window options.
         /// </summary>
         public static ILinuxApplicationOptions LinuxOptions => app.NativeOptions as ILinuxApplicationOptions;
+
+        /// <summary>
+        /// Gets the OS clipboard.
+        /// </summary>
+        public static IClipboard Clipboard => app.Clipboard;
 
         /// <summary>
         /// Gets whether the dark mode is currently enabled.

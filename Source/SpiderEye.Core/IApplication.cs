@@ -30,6 +30,11 @@ namespace SpiderEye
         bool? IsDarkModeEnabled { get; }
 
         /// <summary>
+        /// Gets the clipboard.
+        /// </summary>
+        IClipboard Clipboard { get; }
+
+        /// <summary>
         /// Starts the main loop and blocks until the application exits.
         /// </summary>
         void Run();
