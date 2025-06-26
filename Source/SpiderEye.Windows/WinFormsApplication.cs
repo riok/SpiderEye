@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Drawing.Imaging;
 using System.Threading;
 using System.Windows.Forms;
 using App = System.Windows.Forms.Application;
@@ -16,6 +15,8 @@ namespace SpiderEye.Windows
 #pragma warning disable WFO5001
         public bool? IsDarkModeEnabled => App.IsDarkModeEnabled;
 #pragma warning restore WFO5001
+
+        public IClipboard Clipboard { get; } = new WinFormsClipboard();
 
         public WinFormsApplication()
         {

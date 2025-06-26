@@ -35,6 +35,8 @@ namespace SpiderEye.Linux
 
         public LinuxApplicationFlags ApplicationFlags { get; set; }
 
+        public IClipboard Clipboard { get; } = new GdkClipboard();
+
         public void Run()
         {
             NativeApplication.OnActivate += (sender, args) =>
