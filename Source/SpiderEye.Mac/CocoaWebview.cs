@@ -119,7 +119,7 @@ namespace SpiderEye.Mac
                     if (error != IntPtr.Zero)
                     {
                         string message = NSString.GetString(ObjC.Call(error, "localizedDescription"));
-                        taskResult.TrySetException(new Exception($"Script execution failed with: \"{message}\""));
+                        taskResult.TrySetException(new Exception($"Script execution failed with: \"{message}\". Script: {script}"));
                     }
                     else
                     {

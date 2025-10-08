@@ -106,9 +106,10 @@ namespace SpiderEye.Windows
             webview.CoreWebView2.Navigate(uri.ToString());
         }
 
-        public Task<string> ExecuteScriptAsync(string script)
+        public async Task<string> ExecuteScriptAsync(string script)
         {
-            return webview.ExecuteScriptAsync(script);
+            await EnsureWebViewInitialized();
+            return await webview.ExecuteScriptAsync(script);
         }
 
         public Uri RegisterLocalDirectoryMapping(string directory)
@@ -146,6 +147,11 @@ namespace SpiderEye.Windows
                 Environment.Exit(-1);
             }
 
+            await EnsureWebViewInitialized();
+        }
+
+        private async Task EnsureWebViewInitialized()
+        {
             await webview.EnsureCoreWebView2Async(webView2Environment);
         }
 
