@@ -15,6 +15,13 @@ namespace SpiderEye.Linux
         /// </summary>
         public static void Init()
         {
+            if (Environment.GetEnvironmentVariable("WEBKIT_DISABLE_DMABUF_RENDERER") == null)
+            {
+                // This helps with a lot of webkit bugs (black screen, wrong zoom level etc.)
+                // Since this may impact performance, we only set this if it was not set explicitly by the user
+                Environment.SetEnvironmentVariable("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
+            }
+
             try
             {
                 App = new GtkApplication();
