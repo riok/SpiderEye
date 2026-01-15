@@ -54,7 +54,7 @@ namespace SpiderEye.Linux
                 NativeApplication.ApplicationId = ApplicationId;
             }
 
-            NativeApplication.Run(0, null);
+            NativeApplication.Run([]);
         }
 
         public void Exit()
