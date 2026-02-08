@@ -52,7 +52,7 @@
 
     this.removeEventHandler = function (name) {
         if (typeof name === "string") {
-            delete event[name];
+            delete events[name];
         }
     };
     
