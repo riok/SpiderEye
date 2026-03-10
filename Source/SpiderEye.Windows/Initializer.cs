@@ -4,7 +4,7 @@ namespace SpiderEye.Native
 {
     public static class SpiderEyeInitializer
     {
-        public static void Init()
+        public static void Init(string appId)
         {
             WindowsApplication.Init();
         }

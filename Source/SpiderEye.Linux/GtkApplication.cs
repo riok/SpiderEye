@@ -17,8 +17,9 @@ namespace SpiderEye.Linux
 
         object IApplication.NativeOptions => this;
 
-        public GtkApplication()
+        public GtkApplication(string appId)
         {
+            ApplicationId = appId;
             Init();
 
             Factory = new GtkUiFactory();
