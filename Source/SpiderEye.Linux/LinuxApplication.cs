@@ -13,7 +13,7 @@ namespace SpiderEye.Linux
         /// <summary>
         /// Initializes the application.
         /// </summary>
-        public static void Init()
+        public static void Init(string appId)
         {
             if (Environment.GetEnvironmentVariable("WEBKIT_DISABLE_DMABUF_RENDERER") == null)
             {
@@ -24,7 +24,7 @@ namespace SpiderEye.Linux
 
             try
             {
-                App = new GtkApplication();
+                App = new GtkApplication(appId);
             }
             catch (Exception ex) when (ex is DllNotFoundException or FileNotFoundException)
             {
