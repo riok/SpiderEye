@@ -49,6 +49,7 @@ namespace SpiderEye.Mac
         private readonly Dictionary<string, string> urlPathDirectoryMappings = new Dictionary<string, string>();
         private readonly IntPtr preferences;
 
+        private bool disposed;
         private bool enableDevToolsField;
 
         static CocoaWebview()
@@ -152,6 +153,20 @@ namespace SpiderEye.Mac
 
         public void Dispose()
         {
+            if (disposed)
+            {
+                return;
+            }
+
+            disposed = true;
+
+            IntPtr configuration = ObjC.Call(Handle, "configuration");
+            IntPtr manager = ObjC.Call(configuration, "userContentController");
+
+            ObjC.Call(Handle, "removeObserver:forKeyPath:", callbackClass.Handle, NSString.Create("title"));
+            ObjC.Call(Handle, "setNavigationDelegate:", IntPtr.Zero);
+            ObjC.Call(manager, "removeScriptMessageHandlerForName:", NSString.Create("external"));
+
             // webview will be released automatically
             callbackClass.Dispose();
             schemeHandler.Dispose();

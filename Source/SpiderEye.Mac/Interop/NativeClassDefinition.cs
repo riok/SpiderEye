@@ -82,13 +82,19 @@ namespace SpiderEye.Mac.Interop
             var parentHandle = GCHandle.Alloc(parent, GCHandleType.Normal);
             ObjC.SetVariableValue(instance, ivar, GCHandle.ToIntPtr(parentHandle));
 
-            return new NativeClassInstance(instance, parentHandle);
+            return new NativeClassInstance(instance, parentHandle, ivar);
         }
 
         public T GetParent<T>(IntPtr self)
+            where T : class
         {
             IntPtr handle = ObjC.GetVariableValue(self, ivar);
-            return (T)GCHandle.FromIntPtr(handle).Target;
+            if (handle == IntPtr.Zero)
+            {
+                return null;
+            }
+
+            return GCHandle.FromIntPtr(handle).Target as T;
         }
     }
 }
