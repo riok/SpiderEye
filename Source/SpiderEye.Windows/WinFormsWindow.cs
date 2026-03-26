@@ -318,6 +318,7 @@ namespace SpiderEye.Windows
             foreach (ToolStripItem i in nativeMenu.Items)
             {
                 menuItems.Add(i);
+                RemoveMargins(i);
                 AddShortcutItems(i);
             }
 
@@ -344,6 +345,28 @@ namespace SpiderEye.Windows
                 {
                     menuItem.DropDown.Hide();
                     break;
+                }
+            }
+        }
+
+        private void RemoveMargins(ToolStripItem item)
+        {
+            if (item is not ToolStripMenuItem menuItem)
+            {
+                return;
+            }
+
+            if (menuItem.HasDropDown && menuItem.DropDown is ToolStripDropDownMenu dropdown)
+            {
+                dropdown.ShowCheckMargin = false;
+                dropdown.ShowImageMargin = false;
+            }
+
+            if (menuItem.HasDropDownItems)
+            {
+                foreach (ToolStripItem dropdownItem in menuItem.DropDownItems)
+                {
+                    RemoveMargins(dropdownItem);
                 }
             }
         }
